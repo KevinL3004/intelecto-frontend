@@ -18,6 +18,18 @@ export const MENU: MenuGrupo[] = [
     items: [{ label: 'Inicio', ruta: '/inicio', roles: ['ADMIN', 'CONTADOR', 'CAJERO'] }],
   },
   {
+    titulo: 'Catálogo',
+    items: [
+      { label: 'Libros', ruta: '/catalogo/libros', roles: ['ADMIN', 'CONTADOR'] },
+      { label: 'Precios', ruta: '/catalogo/precios', roles: ['ADMIN', 'CONTADOR', 'CAJERO'] },
+      { label: 'Combos', ruta: '/catalogo/combos', roles: ['ADMIN', 'CONTADOR', 'CAJERO'] },
+    ],
+  },
+  {
+    titulo: 'Inventario',
+    items: [{ label: 'Existencias', ruta: '/inventario', roles: ['ADMIN', 'CONTADOR', 'CAJERO'] }],
+  },
+  {
     titulo: 'Administración',
     items: [
       { label: 'Colegios', ruta: '/admin/colegios', roles: ['ADMIN', 'CONTADOR'] },

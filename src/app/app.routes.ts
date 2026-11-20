@@ -38,6 +38,30 @@ export const routes: Routes = [
             (m) => m.MetodosPagoComponent,
           ),
       },
+      {
+        path: 'catalogo/libros',
+        canActivate: [roleGuard('ADMIN', 'CONTADOR')],
+        loadComponent: () =>
+          import('./features/catalogo/libros/libros.component').then((m) => m.LibrosComponent),
+      },
+      {
+        path: 'catalogo/precios',
+        canActivate: [roleGuard('ADMIN', 'CONTADOR', 'CAJERO')],
+        loadComponent: () =>
+          import('./features/catalogo/precios/precios.component').then((m) => m.PreciosComponent),
+      },
+      {
+        path: 'catalogo/combos',
+        canActivate: [roleGuard('ADMIN', 'CONTADOR', 'CAJERO')],
+        loadComponent: () =>
+          import('./features/catalogo/combos/combos.component').then((m) => m.CombosComponent),
+      },
+      {
+        path: 'inventario',
+        canActivate: [roleGuard('ADMIN', 'CONTADOR', 'CAJERO')],
+        loadComponent: () =>
+          import('./features/inventario/inventario.component').then((m) => m.InventarioComponent),
+      },
     ],
   },
   { path: '**', redirectTo: '' },
