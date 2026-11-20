@@ -110,6 +110,12 @@ export const routes: Routes = [
           import('./features/inventario/proveedores.component').then((m) => m.ProveedoresComponent),
       },
       {
+        path: 'reportes',
+        canActivate: [roleGuard('ADMIN', 'CONTADOR', 'CAJERO')],
+        loadComponent: () =>
+          import('./features/reportes/reportes.component').then((m) => m.ReportesComponent),
+      },
+      {
         path: 'catalogo/libros',
         canActivate: [roleGuard('ADMIN', 'CONTADOR')],
         loadComponent: () =>

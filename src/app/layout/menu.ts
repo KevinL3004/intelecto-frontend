@@ -47,6 +47,10 @@ export const MENU: MenuGrupo[] = [
     ],
   },
   {
+    titulo: 'Reportes',
+    items: [{ label: 'Reportes', ruta: '/reportes', roles: ['ADMIN', 'CONTADOR', 'CAJERO'] }],
+  },
+  {
     titulo: 'Catálogo',
     items: [
       { label: 'Libros', ruta: '/catalogo/libros', roles: ['ADMIN', 'CONTADOR'] },
