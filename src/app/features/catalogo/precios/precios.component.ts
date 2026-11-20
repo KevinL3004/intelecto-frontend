@@ -4,6 +4,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { ToastService } from '../../../core/ui/toast.service';
 import { mensajeError } from '../../../core/http/api-error';
 import { CatalogoApi, FilaPrecio } from '../../../core/catalogo/catalogo.api';
+import { norm } from '../../../shared/texto';
 import { ColegioSelectComponent } from '../../../shared/colegio-select.component';
 import { Colegio, ColegiosService } from '../../admin/colegios/colegios.service';
 
@@ -147,11 +148,9 @@ export class PreciosComponent implements OnInit {
   private listo = false;
 
   readonly visibles = computed(() => {
-    const q = this.filtro().trim().toLowerCase();
+    const q = norm(this.filtro().trim());
     if (!q) return this.filas();
-    return this.filas().filter(
-      (f) => f.titulo.toLowerCase().includes(q) || (f.isbn ?? '').toLowerCase().includes(q),
-    );
+    return this.filas().filter((f) => norm(f.titulo).includes(q) || norm(f.isbn).includes(q));
   });
   readonly conPrecio = computed(() => this.filas().filter((f) => f.precio !== null).length);
   readonly hayInvalidos = computed(() =>

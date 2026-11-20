@@ -25,6 +25,24 @@ export const routes: Routes = [
           import('./features/inicio/inicio.component').then((m) => m.InicioComponent),
       },
       {
+        path: 'personas',
+        canActivate: [roleGuard('ADMIN', 'CONTADOR', 'CAJERO')],
+        loadComponent: () =>
+          import('./features/admin/personas/personas.component').then((m) => m.PersonasComponent),
+      },
+      {
+        path: 'admin/usuarios',
+        canActivate: [roleGuard('ADMIN', 'CONTADOR')],
+        loadComponent: () =>
+          import('./features/admin/usuarios/usuarios.component').then((m) => m.UsuariosComponent),
+      },
+      {
+        path: 'admin/cajas',
+        canActivate: [roleGuard('ADMIN', 'CONTADOR')],
+        loadComponent: () =>
+          import('./features/admin/cajas/cajas.component').then((m) => m.CajasComponent),
+      },
+      {
         path: 'admin/colegios',
         canActivate: [roleGuard('ADMIN', 'CONTADOR')],
         loadComponent: () =>
