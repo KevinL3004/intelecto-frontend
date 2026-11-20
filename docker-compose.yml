@@ -1,0 +1,9 @@
+services:
+  web:
+    build:
+      context: .
+      args:
+        CONFIG: development   # usa environment.ts (API en localhost:3000)
+    container_name: intelecto_web
+    ports:
+      - "4200:80"

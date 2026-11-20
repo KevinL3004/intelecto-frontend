@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =====================================================================
+   Componentes estándar SVI. Usar SIEMPRE estas clases, no estilos sueltos.
+   Botones outline por defecto (DP-15: .btn-solid solo para "Cobrar").
+   ===================================================================== */
+@layer base {
+  html {
+    @apply antialiased;
+  }
+  body {
+    @apply bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100;
+  }
+  :focus-visible {
+    @apply outline-none ring-2 ring-accent-500 ring-offset-2 ring-offset-white dark:ring-offset-zinc-950;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium
+           transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs;
+  }
+  .btn-primary {
+    @apply btn border-accent-600 text-accent-600 hover:bg-accent-50
+           dark:border-accent-400 dark:text-accent-400 dark:hover:bg-accent-950;
+  }
+  .btn-secondary {
+    @apply btn border-zinc-300 text-zinc-700 hover:bg-zinc-100
+           dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800;
+  }
+  .btn-danger {
+    @apply btn border-rose-600 text-rose-600 hover:bg-rose-50
+           dark:border-rose-400 dark:text-rose-400 dark:hover:bg-rose-950;
+  }
+  .btn-solid {
+    @apply btn border-accent-600 bg-accent-600 text-white hover:bg-accent-500
+           dark:border-accent-500 dark:bg-accent-500;
+  }
+  .btn-ghost {
+    @apply btn border-transparent text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800;
+  }
+
+  .label {
+    @apply mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400;
+  }
+  .input {
+    @apply w-full rounded-lg border border-zinc-300 bg-transparent px-3 py-2 text-sm
+           placeholder:text-zinc-400 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500
+           dark:border-zinc-700;
+  }
+  .input-error {
+    @apply border-rose-500 focus:border-rose-500 focus:ring-rose-500;
+  }
+  .field-error {
+    @apply mt-1 text-xs text-rose-600 dark:text-rose-400;
+  }
+
+  .card {
+    @apply rounded-xl border border-zinc-200 p-4 dark:border-zinc-800;
+  }
+  .page-title {
+    @apply text-lg font-semibold;
+  }
+  .muted {
+    @apply text-sm text-zinc-500 dark:text-zinc-400;
+  }
+
+  .table {
+    @apply w-full text-left text-sm;
+  }
+  .table th {
+    @apply border-b border-zinc-200 px-3 py-2 text-xs font-medium text-zinc-500 dark:border-zinc-800 dark:text-zinc-400;
+  }
+  .table td {
+    @apply border-b border-zinc-100 px-3 py-2 dark:border-zinc-900;
+  }
+  .table tr:hover td {
+    @apply bg-zinc-50 dark:bg-zinc-900/50;
+  }
+
+  .badge {
+    @apply inline-flex items-center rounded-full border px-2 py-0.5 text-xs;
+  }
+  .badge-ok {
+    @apply badge border-emerald-600 text-emerald-600 dark:border-emerald-400 dark:text-emerald-400;
+  }
+  .badge-warn {
+    @apply badge border-amber-600 text-amber-600 dark:border-amber-400 dark:text-amber-400;
+  }
+  .badge-off {
+    @apply badge border-zinc-400 text-zinc-500;
+  }
+
+  .money {
+    @apply tabular-nums;
+  }
+}
