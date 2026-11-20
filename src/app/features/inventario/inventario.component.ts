@@ -47,7 +47,7 @@ const TIPO_LABEL: Record<string, string> = {
           />
           Solo con existencia
         </label>
-        @if (esAdmin) {
+        @if (puedeIngresar) {
           <button class="btn-primary" (click)="abrirIngreso()">Ingreso de mercadería</button>
         }
       </div>
@@ -268,7 +268,11 @@ const TIPO_LABEL: Record<string, string> = {
 export class InventarioComponent {
   private readonly api = inject(CatalogoApi);
   private readonly toast = inject(ToastService);
-  readonly esAdmin = inject(AuthService).tieneRol('ADMIN');
+  private readonly auth = inject(AuthService);
+  /** Ajustes: solo Admin. */
+  readonly esAdmin = this.auth.tieneRol('ADMIN');
+  /** Ingreso de mercadería: Admin y Contador. */
+  readonly puedeIngresar = this.auth.tieneRol('ADMIN', 'CONTADOR');
 
   readonly colegioId = signal<number | null>(null);
   readonly soloExistencia = signal(false);
