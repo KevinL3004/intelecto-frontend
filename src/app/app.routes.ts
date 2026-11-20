@@ -57,6 +57,41 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'pos',
+        canActivate: [roleGuard('ADMIN', 'CONTADOR', 'CAJERO')],
+        loadComponent: () => import('./features/pos/pos.component').then((m) => m.PosComponent),
+      },
+      {
+        path: 'pos/cierre',
+        canActivate: [roleGuard('ADMIN', 'CONTADOR', 'CAJERO')],
+        loadComponent: () =>
+          import('./features/pos/cierre.component').then((m) => m.CierreComponent),
+      },
+      {
+        path: 'ventas',
+        canActivate: [roleGuard('ADMIN', 'CONTADOR', 'CAJERO')],
+        loadComponent: () =>
+          import('./features/ventas/ventas.component').then((m) => m.VentasComponent),
+      },
+      {
+        path: 'ventas/:id',
+        canActivate: [roleGuard('ADMIN', 'CONTADOR', 'CAJERO')],
+        loadComponent: () =>
+          import('./features/ventas/venta-detalle.component').then((m) => m.VentaDetalleComponent),
+      },
+      {
+        path: 'turnos',
+        canActivate: [roleGuard('ADMIN', 'CONTADOR', 'CAJERO')],
+        loadComponent: () =>
+          import('./features/turnos/turnos.component').then((m) => m.TurnosComponent),
+      },
+      {
+        path: 'turnos/:id',
+        canActivate: [roleGuard('ADMIN', 'CONTADOR', 'CAJERO')],
+        loadComponent: () =>
+          import('./features/turnos/turno-detalle.component').then((m) => m.TurnoDetalleComponent),
+      },
+      {
         path: 'catalogo/libros',
         canActivate: [roleGuard('ADMIN', 'CONTADOR')],
         loadComponent: () =>

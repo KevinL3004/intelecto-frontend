@@ -3,6 +3,10 @@ import { Rol } from '../core/auth/auth.models';
 export interface MenuItem {
   label: string;
   ruta: string;
+  /** Parámetros de consulta opcionales, p. ej. { pendientes: '1' }. */
+  query?: Record<string, string>;
+  /** Resaltar solo en la ruta exacta (p. ej. /pos no debe resaltarse en /pos/cierre). */
+  exacto?: boolean;
   roles: Rol[];
 }
 
@@ -16,6 +20,31 @@ export const MENU: MenuGrupo[] = [
   {
     titulo: 'General',
     items: [{ label: 'Inicio', ruta: '/inicio', roles: ['ADMIN', 'CONTADOR', 'CAJERO'] }],
+  },
+  {
+    titulo: 'Caja',
+    items: [
+      {
+        label: 'Punto de venta',
+        ruta: '/pos',
+        exacto: true,
+        roles: ['ADMIN', 'CONTADOR', 'CAJERO'],
+      },
+      { label: 'Cierre de turno', ruta: '/pos/cierre', roles: ['ADMIN', 'CONTADOR', 'CAJERO'] },
+    ],
+  },
+  {
+    titulo: 'Ventas',
+    items: [
+      { label: 'Ventas', ruta: '/ventas', roles: ['ADMIN', 'CONTADOR', 'CAJERO'] },
+      {
+        label: 'Entregas pendientes',
+        ruta: '/ventas',
+        query: { pendientes: '1' },
+        roles: ['ADMIN', 'CONTADOR', 'CAJERO'],
+      },
+      { label: 'Turnos y cierres', ruta: '/turnos', roles: ['ADMIN', 'CONTADOR', 'CAJERO'] },
+    ],
   },
   {
     titulo: 'Catálogo',

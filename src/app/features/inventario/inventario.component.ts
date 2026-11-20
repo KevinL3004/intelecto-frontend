@@ -103,12 +103,13 @@ const TIPO_LABEL: Record<string, string> = {
                     <select
                       class="input"
                       aria-label="Agregar libro"
-                      [ngModel]="null"
-                      (ngModelChange)="agregar($event)"
+                      (change)="
+                        agregar(+$any($event.target).value || null); $any($event.target).value = ''
+                      "
                     >
-                      <option [ngValue]="null">+ Agregar libro…</option>
+                      <option value="">+ Agregar libro…</option>
                       @for (f of libresIngreso(); track f.libroId) {
-                        <option [ngValue]="f.libroId">{{ f.titulo }}</option>
+                        <option [value]="f.libroId">{{ f.titulo }}</option>
                       }
                     </select>
                   </td>

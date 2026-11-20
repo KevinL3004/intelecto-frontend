@@ -130,12 +130,13 @@ const q = (c: number) => (c / 100).toFixed(2);
                     <select
                       class="input"
                       aria-label="Agregar libro"
-                      [ngModel]="null"
-                      (ngModelChange)="agregar($event)"
+                      (change)="
+                        agregar(+$any($event.target).value || null); $any($event.target).value = ''
+                      "
                     >
-                      <option [ngValue]="null">+ Agregar libro…</option>
+                      <option value="">+ Agregar libro…</option>
                       @for (f of disponibles(); track f.libroId) {
-                        <option [ngValue]="f.libroId">
+                        <option [value]="f.libroId">
                           {{ f.titulo }} — {{ f.precio ? 'Q' + f.precio : 'sin precio' }}
                         </option>
                       }

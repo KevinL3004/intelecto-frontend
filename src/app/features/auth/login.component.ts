@@ -69,7 +69,9 @@ export class LoginComponent {
     this.auth.login(username.trim(), password).subscribe({
       next: (r) => {
         if (r.usuario.tema) this.theme.set(r.usuario.tema, false);
-        this.router.navigate([r.usuario.debeCambiarPassword ? '/cambiar-password' : '/inicio']);
+        // CU-01: el cajero entra directo al punto de venta (allí abre turno si no tiene).
+        const destino = r.usuario.rol === 'CAJERO' ? '/pos' : '/inicio';
+        this.router.navigate([r.usuario.debeCambiarPassword ? '/cambiar-password' : destino]);
       },
       error: (e) => {
         this.error.set(mensajeError(e));
