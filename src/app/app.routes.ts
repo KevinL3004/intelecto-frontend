@@ -92,6 +92,24 @@ export const routes: Routes = [
           import('./features/turnos/turno-detalle.component').then((m) => m.TurnoDetalleComponent),
       },
       {
+        path: 'inventario/traslados',
+        canActivate: [roleGuard('ADMIN', 'CONTADOR')],
+        loadComponent: () =>
+          import('./features/inventario/traslados.component').then((m) => m.TrasladosComponent),
+      },
+      {
+        path: 'inventario/pedidos',
+        canActivate: [roleGuard('ADMIN', 'CONTADOR')],
+        loadComponent: () =>
+          import('./features/inventario/pedidos.component').then((m) => m.PedidosComponent),
+      },
+      {
+        path: 'inventario/proveedores',
+        canActivate: [roleGuard('ADMIN', 'CONTADOR')],
+        loadComponent: () =>
+          import('./features/inventario/proveedores.component').then((m) => m.ProveedoresComponent),
+      },
+      {
         path: 'catalogo/libros',
         canActivate: [roleGuard('ADMIN', 'CONTADOR')],
         loadComponent: () =>

@@ -29,7 +29,7 @@ import { ActaComponent } from './acta.component';
       <button class="btn-secondary btn-sm" (click)="imprimir()">Imprimir acta</button>
     </div>
     @if (acta(); as a) {
-      @if (esContador && (a.estado === 'CERRADO' || a.estado === 'OBSERVADO')) {
+      @if (esSupervisor && (a.estado === 'CERRADO' || a.estado === 'OBSERVADO')) {
         <div class="card mb-4 space-y-2 print:hidden">
           <p class="font-medium">Validar cierre</p>
           <p class="muted text-sm">
@@ -139,7 +139,6 @@ export class TurnoDetalleComponent implements OnInit {
   private readonly api = inject(VentasApi);
   private readonly toast = inject(ToastService);
   private readonly auth = inject(AuthService);
-  readonly esContador = this.auth.tieneRol('CONTADOR');
   readonly esSupervisor = this.auth.tieneRol('ADMIN', 'CONTADOR');
   readonly acta = signal<Acta | null>(null);
   readonly denominaciones = signal<Denominacion[]>([]);

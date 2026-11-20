@@ -84,8 +84,8 @@ export class TurnosComponent implements OnInit {
   readonly estados: EstadoTurno[] = ['ABIERTO', 'EN_CIERRE', 'CERRADO', 'VALIDADO', 'OBSERVADO'];
   readonly items = signal<FilaTurno[]>([]);
   readonly total = signal(0);
-  /** El Contador entra directo a los cierres por validar. */
-  estado = inject(AuthService).tieneRol('CONTADOR') ? 'CERRADO' : '';
+  /** Admin y Contador entran directo a los cierres por validar. */
+  estado = inject(AuthService).tieneRol('ADMIN', 'CONTADOR') ? 'CERRADO' : '';
 
   ngOnInit() {
     this.cargar();

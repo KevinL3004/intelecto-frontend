@@ -56,7 +56,16 @@ export const MENU: MenuGrupo[] = [
   },
   {
     titulo: 'Inventario',
-    items: [{ label: 'Existencias', ruta: '/inventario', roles: ['ADMIN', 'CONTADOR', 'CAJERO'] }],
+    items: [
+      {
+        label: 'Existencias',
+        ruta: '/inventario',
+        exacto: true,
+        roles: ['ADMIN', 'CONTADOR', 'CAJERO'],
+      },
+      { label: 'Traslados', ruta: '/inventario/traslados', roles: ['ADMIN', 'CONTADOR'] },
+      { label: 'Pedidos a proveedor', ruta: '/inventario/pedidos', roles: ['ADMIN', 'CONTADOR'] },
+    ],
   },
   {
     titulo: 'Clientes',
