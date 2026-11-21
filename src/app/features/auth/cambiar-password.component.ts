@@ -10,6 +10,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { ToastService } from '../../core/ui/toast.service';
 import { mensajeError } from '../../core/http/api-error';
+import { AYUDA_PASSWORD, passwordSegura } from '../../shared/password';
 
 const iguales = (g: AbstractControl): ValidationErrors | null =>
   g.get('nueva')?.value === g.get('confirmar')?.value ? null : { distintas: true };
@@ -23,7 +24,7 @@ const iguales = (g: AbstractControl): ValidationErrors | null =>
       <form class="card w-full max-w-sm space-y-4 p-6" [formGroup]="form" (ngSubmit)="guardar()">
         <div>
           <h1 class="page-title">Cambiar contraseña</h1>
-          <p class="muted">Mínimo 8 caracteres, con mayúscula, minúscula y número.</p>
+          <p class="muted">{{ ayuda }}</p>
         </div>
         <div>
           <label class="label" for="a">Contraseña actual</label>
@@ -44,6 +45,9 @@ const iguales = (g: AbstractControl): ValidationErrors | null =>
             formControlName="nueva"
             autocomplete="new-password"
           />
+          @if (form.controls.nueva.errors?.['password'] && form.controls.nueva.dirty) {
+            <p class="field-error">Falta: {{ form.controls.nueva.errors?.['password'] }}</p>
+          }
         </div>
         <div>
           <label class="label" for="c">Confirmar</label>
@@ -77,14 +81,12 @@ export class CambiarPasswordComponent {
   private readonly toast = inject(ToastService);
   readonly cargando = signal(false);
   readonly error = signal('');
+  readonly ayuda = AYUDA_PASSWORD;
 
   readonly form = inject(FormBuilder).nonNullable.group(
     {
       actual: ['', Validators.required],
-      nueva: [
-        '',
-        [Validators.required, Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/)],
-      ],
+      nueva: ['', [Validators.required, passwordSegura(() => this.auth.usuario()?.username)]],
       confirmar: ['', Validators.required],
     },
     { validators: iguales },

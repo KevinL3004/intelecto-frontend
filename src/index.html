@@ -4,17 +4,10 @@
     <meta charset="utf-8" />
     <title>Intelecto · Ventas</title>
     <base href="/" />
+    <meta name="referrer" content="no-referrer" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-    <script>
-      // Aplica el tema antes de pintar para evitar parpadeo.
-      (function () {
-        var t = localStorage.getItem('svi.tema') || 'system';
-        var dark =
-          t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
-        if (dark) document.documentElement.classList.add('dark');
-      })();
-    </script>
+    <script src="tema.js"></script>
   </head>
   <body>
     <app-root></app-root>

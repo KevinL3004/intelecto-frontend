@@ -3,13 +3,22 @@ on:
   pull_request:
   push:
     branches: [main, develop]
+
+# Mínimo privilegio: el workflow solo puede leer el repositorio.
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 20, cache: npm }
-      - run: npm ci
+      # Acciones fijadas por hash de commit (una etiqueta se puede mover; un hash no).
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: { node-version: 24, cache: npm }
+      - run: npm ci --ignore-scripts
+      # Falla si aparece cualquier vulnerabilidad conocida (moderada o mayor).
+      - run: npm audit --audit-level=moderate
       - run: npm run lint
       - run: npm run build

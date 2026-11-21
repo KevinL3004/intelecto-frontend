@@ -6,4 +6,4 @@ services:
         CONFIG: development   # usa environment.ts (API en localhost:3000)
     container_name: intelecto_web
     ports:
-      - "4200:80"
+      - "4200:8080"

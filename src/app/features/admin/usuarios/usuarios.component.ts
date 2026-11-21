@@ -7,8 +7,7 @@ import { ToastService } from '../../../core/ui/toast.service';
 import { mensajeError } from '../../../core/http/api-error';
 import { AdminApi, UsuarioAdmin } from '../../../core/admin/admin.api';
 import { Colegio, ColegiosService } from '../colegios/colegios.service';
-
-const PASSWORD = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+import { AYUDA_PASSWORD, problemasPassword } from '../../../shared/password';
 
 /** Usuarios del sistema. Admin administra; Contador solo consulta. */
 @Component({
@@ -97,9 +96,16 @@ const PASSWORD = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
               formControlName="password"
               autocomplete="new-password"
             />
-            <p class="muted mt-1 text-xs">
-              8+ caracteres, mayúscula, minúscula y número. Se pedirá cambiarla al entrar.
-            </p>
+            @if (
+              form.controls.password.value &&
+              faltaPassword(form.controls.password.value, form.controls.username.value)
+            ) {
+              <p class="field-error">
+                Falta:
+                {{ faltaPassword(form.controls.password.value, form.controls.username.value) }}
+              </p>
+            }
+            <p class="muted mt-1 text-xs">{{ ayuda }} Se pedirá cambiarla al entrar.</p>
           </div>
         }
         <div class="flex justify-end gap-2 sm:col-span-3">
@@ -125,12 +131,19 @@ const PASSWORD = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
             [value]="nuevaPassword()"
             (input)="nuevaPassword.set($any($event.target).value)"
           />
-          <p class="muted mt-1 text-xs">Desbloquea al usuario y le pedirá cambiarla al entrar.</p>
+          @if (nuevaPassword() && faltaPassword(nuevaPassword(), editando()?.username)) {
+            <p class="field-error">
+              Falta: {{ faltaPassword(nuevaPassword(), editando()?.username) }}
+            </p>
+          }
+          <p class="muted mt-1 text-xs">
+            {{ ayuda }} Desbloquea al usuario y le pedirá cambiarla al entrar.
+          </p>
         </div>
         <button class="btn-secondary" (click)="panel.set(null)">Cancelar</button>
         <button
           class="btn-primary"
-          [disabled]="!passwordValida(nuevaPassword())"
+          [disabled]="!!faltaPassword(nuevaPassword(), editando()?.username) || !nuevaPassword()"
           (click)="resetear()"
         >
           Restablecer
@@ -269,15 +282,18 @@ export class UsuariosComponent implements OnInit {
     return !!u.bloqueadoHasta && new Date(u.bloqueadoHasta) > new Date();
   }
 
-  passwordValida(p: string) {
-    return PASSWORD.test(p);
+  readonly ayuda = AYUDA_PASSWORD;
+
+  /** Lo que le falta a la contraseña según la política (vacío si es aceptable). */
+  faltaPassword(p: string, usuario?: string | null) {
+    return problemasPassword(p, usuario).join('; ');
   }
 
   invalido() {
     const v = this.form.getRawValue();
     if (this.form.invalid) return true;
     if (v.rol === 'CAJERO' && !v.colegioId) return true;
-    return !this.editando() && !PASSWORD.test(v.password);
+    return !this.editando() && (!v.password || !!this.faltaPassword(v.password, v.username));
   }
 
   nuevo() {
