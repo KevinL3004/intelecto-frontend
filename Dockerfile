@@ -1,5 +1,5 @@
 # Solo para correr el frontend en local con Docker. En producción se usa Cloudflare Pages.
-FROM node:24.22.3-alpine AS build
+FROM node:26.13.1-alpine AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --ignore-scripts
