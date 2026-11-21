@@ -10,7 +10,8 @@ import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { Dashboard, ReportesApi } from '../../core/reportes/reportes.api';
-import { ESTADO_LINEA, EstadoLinea } from '../../core/ventas/ventas.api';
+import { ESTADO_LINEA, EstadoLinea, Metodo, VentasApi } from '../../core/ventas/ventas.api';
+import { AvisosService } from '../../core/ui/avisos.service';
 import { QuetzalPipe } from '../../shared/quetzal.pipe';
 
 const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
@@ -34,14 +35,44 @@ const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
           routerLink="/ventas"
           [queryParams]="{ pendientes: '1' }"
         >
-          <p class="font-medium">Entregas pendientes</p>
-          <p class="muted">Libros que el cliente recoge</p>
+          <p class="flex items-center justify-between font-medium">
+            Entregas pendientes
+            @if (avisos()?.entregasPendientes; as n) {
+              <span class="aviso">{{ n }}</span>
+            }
+          </p>
+          <p class="muted">
+            {{
+              avisos()?.entregasPendientes
+                ? avisos()!.entregasPendientes + ' venta(s) de su colegio con libros por entregar'
+                : 'Libros que el cliente recoge'
+            }}
+          </p>
         </a>
         <a class="card hover:border-accent-500" routerLink="/ventas">
           <p class="font-medium">Mis ventas</p>
           <p class="muted">Consultar y reimprimir comprobantes</p>
         </a>
       </div>
+      @if (metodos().length) {
+        <div class="card mt-4 max-w-md text-sm">
+          <p class="mb-1 font-medium">Recargos vigentes</p>
+          @for (m of metodos(); track m.id) {
+            <div class="flex justify-between">
+              <span>{{ m.nombre }}</span>
+              <span
+                [class]="
+                  m.recargoPct !== '0.00'
+                    ? 'font-semibold text-amber-700 dark:text-amber-400'
+                    : 'muted'
+                "
+              >
+                {{ m.recargoPct !== '0.00' ? '+' + m.recargoPct + ' %' : 'sin recargo' }}
+              </span>
+            </div>
+          }
+        </div>
+      }
     } @else if (d()) {
       @let dash = d()!;
       <p class="muted mb-6">Resumen de hoy</p>
@@ -71,6 +102,20 @@ const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
           <p class="text-2xl font-semibold tabular-nums">{{ dash.turnosPorValidar }}</p>
         </a>
       </div>
+
+      @if (trabajo().length) {
+        <div class="mb-4 flex flex-wrap gap-2" role="status" aria-label="Trabajo pendiente">
+          @for (t of trabajo(); track t.texto) {
+            <a
+              class="flex items-center gap-2 rounded-lg border border-amber-400 px-3 py-2 text-sm hover:bg-amber-50 dark:border-amber-700 dark:hover:bg-amber-950/30"
+              [routerLink]="t.ruta"
+              [queryParams]="t.query ?? {}"
+            >
+              <span class="aviso ml-0">{{ t.n }}</span> {{ t.texto }}
+            </a>
+          }
+        </div>
+      }
 
       <div class="grid gap-4 lg:grid-cols-3">
         <div class="card lg:col-span-2">
@@ -158,6 +203,27 @@ export class InicioComponent implements OnInit {
   private readonly api = inject(ReportesApi);
   readonly supervisor = this.auth.tieneRol('ADMIN', 'CONTADOR');
   readonly d = signal<Dashboard | null>(null);
+  private readonly ventasApi = inject(VentasApi);
+  readonly avisos = inject(AvisosService).avisos;
+  readonly metodos = signal<Metodo[]>([]);
+  /** Trabajo pendiente para Admin/Contador, con acceso directo a donde se resuelve. */
+  readonly trabajo = computed(() => {
+    const a = this.avisos();
+    if (!a) return [];
+    const r = (
+      n: number | undefined,
+      texto: string,
+      ruta: string,
+      query?: Record<string, string>,
+    ) => (n ? [{ n, texto, ruta, query }] : []);
+    return [
+      ...r(a.trasladosPorDespachar, 'traslado(s) por despachar', '/inventario/traslados'),
+      ...r(a.trasladosPorRecibir, 'traslado(s) en camino por recibir', '/inventario/traslados'),
+      ...r(a.unidadesPorTrasladar, 'libro(s) vendidos esperando traslado', '/inventario/traslados'),
+      ...r(a.unidadesPorPedir, 'libro(s) vendidos por pedir al proveedor', '/inventario/pedidos'),
+      ...r(a.correosFallidos, 'comprobante(s) por correo no enviados (7 días)', '/ventas'),
+    ];
+  });
 
   readonly totalPendientes = computed(() =>
     (this.d()?.pendientes ?? []).reduce((a, p) => a + p.unidades, 0),
@@ -187,6 +253,12 @@ export class InicioComponent implements OnInit {
 
   ngOnInit() {
     if (this.supervisor) this.api.dashboard().subscribe((d) => this.d.set(d));
+    else
+      this.ventasApi
+        .metodosPago()
+        .subscribe((ms) =>
+          this.metodos.set(ms.map((m) => ({ ...m, recargoPct: Number(m.recargoPct).toFixed(2) }))),
+        );
   }
 
   estado(e: string) {

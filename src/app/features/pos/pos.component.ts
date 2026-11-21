@@ -25,6 +25,7 @@ import {
   Denominacion,
   Empresa,
   ESTADO_LINEA,
+  FilaVenta,
   Metodo,
   PagoEntrada,
   Venta,
@@ -264,6 +265,28 @@ interface PagoForm {
                   Sin correo registrado: podrá escribir uno al terminar la venta.
                 }
               </p>
+              @if (porRecoger().length) {
+                <div
+                  class="rounded-lg border border-amber-400 p-2 text-sm sm:col-span-2 dark:border-amber-700"
+                  role="status"
+                >
+                  <p class="font-medium text-amber-700 dark:text-amber-400">
+                    Tiene libros por recoger de compras anteriores
+                  </p>
+                  @for (v of porRecoger(); track v.id) {
+                    <p class="flex flex-wrap items-center justify-between gap-2">
+                      <span
+                        ><span class="font-mono">{{ v.codigo }}</span> ·
+                        {{ v.fecha | date: 'dd/MM/yyyy'
+                        }}{{ v.alumno ? ' · ' + v.alumno : '' }}</span
+                      >
+                      <a class="btn-ghost btn-sm" [routerLink]="['/ventas', v.id]"
+                        >Ver y entregar</a
+                      >
+                    </p>
+                  }
+                </div>
+              }
               @if (hijos().length) {
                 <div class="flex flex-wrap items-center gap-2 sm:col-span-2">
                   <span class="muted text-xs">Alumnos registrados:</span>
@@ -436,7 +459,9 @@ interface PagoForm {
                         >
                           <option value="">+ Agregar libro…</option>
                           @for (f of librosDisponibles(i); track f.libroId) {
-                            <option [value]="f.libroId">{{ f.titulo }} — Q{{ f.precio }}</option>
+                            <option [value]="f.libroId">
+                              {{ f.titulo }} — Q{{ f.precio }} · {{ textoDisponible(f.libroId) }}
+                            </option>
                           }
                         </select>
                       </td>
@@ -459,8 +484,40 @@ interface PagoForm {
           </label>
         </div>
 
-        <!-- Columna derecha: totales y cobro -->
+        <!-- Columna derecha: recargos, totales y cobro -->
         <div class="space-y-4 lg:col-span-2">
+          <div
+            class="card border-amber-300 bg-amber-50/60 p-3 text-sm dark:border-amber-900 dark:bg-amber-950/20"
+            role="note"
+            aria-label="Recargos vigentes por método de pago"
+          >
+            <p class="mb-1 font-medium">Recargos vigentes</p>
+            @for (m of metodosVigentes(); track m.id) {
+              <div class="flex items-baseline justify-between gap-2">
+                <span>
+                  {{ m.nombre }}
+                  <span
+                    [class]="
+                      m.recargoPct !== '0.00'
+                        ? 'font-semibold text-amber-700 dark:text-amber-400'
+                        : 'muted'
+                    "
+                    >{{ m.recargoPct !== '0.00' ? '+' + m.recargoPct + ' %' : 'sin recargo' }}</span
+                  >
+                </span>
+                @if (totalCon(m.id); as t) {
+                  <span class="money" [title]="'Si paga todo con ' + m.nombre.toLowerCase()"
+                    >Q{{ t }}</span
+                  >
+                }
+              </div>
+            }
+            @if (hayRecargo() && cot()) {
+              <p class="muted mt-1 text-xs">
+                Total si paga todo con cada método. Informe el recargo al cliente antes de cobrar.
+              </p>
+            }
+          </div>
           <div class="card space-y-1 text-sm">
             @if (bloques().length > 1) {
               @for (b of bloques(); track b.clave; let i = $index) {
@@ -505,7 +562,11 @@ interface PagoForm {
               <p class="font-medium">Cobro</p>
               <div class="flex gap-1">
                 @for (m of metodos(); track m.id) {
-                  <button class="btn-ghost btn-sm" (click)="todoCon(m)">
+                  <button
+                    class="btn-ghost btn-sm"
+                    [title]="totalCon(m.id) ? 'Total a cobrar: Q' + totalCon(m.id) : ''"
+                    (click)="todoCon(m)"
+                  >
                     Todo {{ m.nombre.toLowerCase() }}
                   </button>
                 }
@@ -656,6 +717,7 @@ export class PosComponent implements OnInit, OnDestroy {
 
   // Venta
   private ciclo = new Date().getFullYear();
+  private colegioId: number | null = null;
   private siguienteClave = 1;
   readonly grados = signal<Grado[]>([]);
   readonly combos = signal<Combo[]>([]);
@@ -672,6 +734,13 @@ export class PosComponent implements OnInit, OnDestroy {
 
   readonly cliente = signal<Persona | null>(null);
   readonly hijos = signal<Alumno[]>([]);
+  /** Ventas anteriores del cliente con libros por recoger. */
+  readonly porRecoger = signal<FilaVenta[]>([]);
+  /** Recargos vigentes (se muestran antes de agregar libros). */
+  readonly metodosVigentes = signal<Metodo[]>([]);
+  /** Disponible por libro en el colegio de la caja. */
+  readonly disponibles = signal<Map<number, number>>(new Map());
+  readonly hayRecargo = computed(() => this.metodosVigentes().some((m) => m.recargoPct !== '0.00'));
   private consumidorFinal: Persona | null = null;
   readonly busquedaCliente = signal('');
   readonly resultadosCliente = signal<Persona[]>([]);
@@ -801,6 +870,15 @@ export class PosComponent implements OnInit, OnDestroy {
   }
 
   private prepararVenta(colegioId: number) {
+    this.colegioId = colegioId;
+    this.api
+      .metodosPago()
+      .subscribe((ms) =>
+        this.metodosVigentes.set(
+          ms.map((m) => ({ ...m, recargoPct: Number(m.recargoPct).toFixed(2) })),
+        ),
+      );
+    this.cargarExistencias();
     this.catalogo.grados().subscribe((g) => this.grados.set(g.filter((x) => x.activo)));
     this.catalogo.cicloActual().subscribe((ciclo) => {
       this.ciclo = ciclo;
@@ -821,6 +899,7 @@ export class PosComponent implements OnInit, OnDestroy {
     this.entregarAhora.set(true);
     this.cliente.set(null);
     this.hijos.set([]);
+    this.porRecoger.set([]);
     this.busquedaCliente.set('');
     this.resultadosCliente.set([]);
     this.pagos.set([]);
@@ -846,6 +925,12 @@ export class PosComponent implements OnInit, OnDestroy {
     this.resultadosCliente.set([]);
     this.busquedaCliente.set('');
     this.hijos.set([]);
+    this.porRecoger.set([]);
+    // El cliente genérico CF no: mostraría las compras de cualquiera.
+    if (p.id !== this.consumidorFinal?.id)
+      this.api
+        .ventas({ clienteId: p.id, pendientesEntrega: true, limit: 5 })
+        .subscribe((r) => this.porRecoger.set(r.data));
     this.api.alumnosDe(p.id).subscribe((h) => {
       this.hijos.set(h);
       // Un solo hijo registrado y la venta aún vacía: se precarga.
@@ -871,6 +956,22 @@ export class PosComponent implements OnInit, OnDestroy {
         },
         error: (e) => this.toast.error(mensajeError(e)),
       });
+  }
+
+  // ---------- información a la vista ----------
+  /** Total si paga todo con ese método (del backend); null si aún no hay libros. */
+  totalCon(metodoId: number) {
+    return this.cot()?.totalSegunMetodo?.find((t) => t.metodoPagoId === metodoId)?.total ?? null;
+  }
+  private cargarExistencias() {
+    if (!this.colegioId) return;
+    this.api
+      .existencias(this.colegioId)
+      .subscribe((fs) => this.disponibles.set(new Map(fs.map((f) => [f.libroId, f.disponible]))));
+  }
+  textoDisponible(libroId: number) {
+    const d = this.disponibles().get(libroId) ?? 0;
+    return d > 0 ? `${d} disp.` : 'sin existencia';
   }
 
   // ---------- alumnos ----------
@@ -1143,6 +1244,7 @@ export class PosComponent implements OnInit, OnDestroy {
           this.toast.ok(`Venta ${venta.codigo} registrada`);
           if (this.autoImprimir()) setTimeout(() => this.imprimir(), 300);
           // Refresca existencias/precios para la siguiente venta.
+          this.cargarExistencias();
           this.catalogo
             .precios(venta.colegioId, this.ciclo)
             .subscribe((p) => this.precios.set(p.items));

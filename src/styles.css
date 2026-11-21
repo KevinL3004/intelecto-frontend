@@ -115,3 +115,10 @@
     color: #000 !important;
   }
 }
+
+/* Contador de pendientes en el menú. */
+@layer components {
+  .aviso {
+    @apply ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[11px] font-semibold leading-5 text-white tabular-nums;
+  }
+}

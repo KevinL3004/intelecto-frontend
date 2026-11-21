@@ -76,6 +76,9 @@ const LICENCIA = /^[A-Za-z0-9][A-Za-z0-9._-]{2,59}$/;
           <table class="table">
             <thead>
               <tr>
+                @if (v.alumnos.length) {
+                  <th>Alumno</th>
+                }
                 <th>Libro</th>
                 <th class="text-right">Por entregar</th>
                 <th class="w-32 text-right">Entregar ahora</th>
@@ -84,6 +87,9 @@ const LICENCIA = /^[A-Za-z0-9][A-Za-z0-9._-]{2,59}$/;
             <tbody>
               @for (l of reservados(); track l.id) {
                 <tr>
+                  @if (v.alumnos.length) {
+                    <td>{{ alumnoDe(l.ventaAlumnoId) }}</td>
+                  }
                   <td>{{ l.titulo }}</td>
                   <td class="text-right">{{ l.cantidad - l.cantidadEntregada }}</td>
                   <td class="text-right">
@@ -118,6 +124,9 @@ const LICENCIA = /^[A-Za-z0-9][A-Za-z0-9._-]{2,59}$/;
           <p class="mb-1 font-medium">Aún no se pueden entregar</p>
           @for (l of otrosPendientes(); track l.id) {
             <p>
+              @if (l.ventaAlumnoId) {
+                <span class="muted">{{ alumnoDe(l.ventaAlumnoId) }}:</span>
+              }
               {{ l.cantidad }} × {{ l.titulo }} — {{ estado(l.estado)
               }}{{ l.colegioOrigen ? ' desde ' + l.colegioOrigen : '' }}
             </p>
@@ -220,6 +229,10 @@ export class VentaDetalleComponent implements OnInit {
       },
       error: (e) => this.toast.error(mensajeError(e)),
     });
+  }
+
+  alumnoDe(ventaAlumnoId: number | null) {
+    return this.venta()?.alumnos.find((a) => a.id === ventaAlumnoId)?.nombre ?? '—';
   }
 
   editarLicencia(id: number, actual: string | null) {

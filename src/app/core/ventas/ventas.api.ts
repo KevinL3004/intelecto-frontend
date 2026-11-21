@@ -165,6 +165,14 @@ export interface Cotizacion {
   comboAplicado: boolean;
   aPagar: string;
   metodos: Metodo[];
+  /** Total si el cliente paga TODO con cada método (calculado por el backend, RN-02). */
+  totalSegunMetodo: {
+    metodoPagoId: number;
+    nombre: string;
+    recargoPct: string;
+    recargo: string;
+    total: string;
+  }[];
   pagos: {
     pagos: {
       metodoPagoId: number;
@@ -401,6 +409,17 @@ export class VentasApi {
     return this.http.get<Acta>(`${this.api}/turnos/${id}/acta`);
   }
 
+  /** Métodos de pago activos con su recargo vigente. */
+  metodosPago() {
+    return this.http.get<(Metodo & { activo: boolean })[]>(`${this.api}/metodos-pago`);
+  }
+  /** Existencias del colegio (el cajero solo ve el suyo). */
+  existencias(colegioId: number) {
+    return this.http.get<{ libroId: number; disponible: number }[]>(`${this.api}/inventario`, {
+      params: new HttpParams().set('colegioId', colegioId),
+    });
+  }
+
   // Ventas
   cotizar(dto: VentaInput) {
     return this.http.post<Cotizacion>(`${this.api}/ventas/cotizar`, dto);
@@ -418,10 +437,12 @@ export class VentasApi {
     desde?: string;
     hasta?: string;
     turnoId?: number;
+    clienteId?: number;
     page?: number;
     limit?: number;
   }) {
     let params = new HttpParams().set('page', f.page ?? 1).set('limit', f.limit ?? 30);
+    if (f.clienteId) params = params.set('clienteId', f.clienteId);
     if (f.q) params = params.set('q', f.q);
     if (f.estadoPago) params = params.set('estadoPago', f.estadoPago);
     if (f.pendientesEntrega) params = params.set('pendientesEntrega', 'true');

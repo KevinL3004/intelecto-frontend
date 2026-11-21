@@ -1,4 +1,5 @@
 import { Rol } from '../core/auth/auth.models';
+import { Avisos } from '../core/ui/avisos.service';
 
 export interface MenuItem {
   label: string;
@@ -8,6 +9,10 @@ export interface MenuItem {
   /** Resaltar solo en la ruta exacta (p. ej. /pos no debe resaltarse en /pos/cierre). */
   exacto?: boolean;
   roles: Rol[];
+  /** Contador de trabajo pendiente que se muestra junto a la opción. */
+  aviso?: (a: Avisos) => number | undefined;
+  /** Texto del aviso (tooltip y lector de pantalla). */
+  avisoTexto?: string;
 }
 
 export interface MenuGrupo {
@@ -42,8 +47,16 @@ export const MENU: MenuGrupo[] = [
         ruta: '/ventas',
         query: { pendientes: '1' },
         roles: ['ADMIN', 'CONTADOR', 'CAJERO'],
+        aviso: (a) => a.entregasPendientes,
+        avisoTexto: 'ventas con libros por entregar',
       },
-      { label: 'Turnos y cierres', ruta: '/turnos', roles: ['ADMIN', 'CONTADOR', 'CAJERO'] },
+      {
+        label: 'Turnos y cierres',
+        ruta: '/turnos',
+        roles: ['ADMIN', 'CONTADOR', 'CAJERO'],
+        aviso: (a) => a.turnosPorValidar,
+        avisoTexto: 'cierres por validar',
+      },
     ],
   },
   {
@@ -67,8 +80,20 @@ export const MENU: MenuGrupo[] = [
         exacto: true,
         roles: ['ADMIN', 'CONTADOR', 'CAJERO'],
       },
-      { label: 'Traslados', ruta: '/inventario/traslados', roles: ['ADMIN', 'CONTADOR'] },
-      { label: 'Pedidos a proveedor', ruta: '/inventario/pedidos', roles: ['ADMIN', 'CONTADOR'] },
+      {
+        label: 'Traslados',
+        ruta: '/inventario/traslados',
+        roles: ['ADMIN', 'CONTADOR'],
+        aviso: (a) => (a.trasladosPorRecibir ?? 0) + (a.trasladosPorDespachar ?? 0),
+        avisoTexto: 'traslados por despachar o recibir',
+      },
+      {
+        label: 'Pedidos a proveedor',
+        ruta: '/inventario/pedidos',
+        roles: ['ADMIN', 'CONTADOR'],
+        aviso: (a) => a.unidadesPorPedir,
+        avisoTexto: 'libros vendidos por pedir al proveedor',
+      },
     ],
   },
   {
