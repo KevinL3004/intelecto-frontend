@@ -12,13 +12,16 @@ import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { ToastService } from '../../core/ui/toast.service';
 import { mensajeError } from '../../core/http/api-error';
-import { ESTADO_LINEA, Venta, VentasApi } from '../../core/ventas/ventas.api';
+import { Empresa, ESTADO_LINEA, Venta, VentasApi } from '../../core/ventas/ventas.api';
 import { ComprobanteComponent } from './comprobante.component';
+import { EnvioCorreoComponent } from './envio-correo.component';
+
+const LICENCIA = /^[A-Za-z0-9][A-Za-z0-9._-]{2,59}$/;
 
 /** Detalle de venta: comprobante, entrega de reservados (CU-10) y anulación (CU-15). */
 @Component({
   selector: 'app-venta-detalle',
-  imports: [FormsModule, RouterLink, ComprobanteComponent],
+  imports: [FormsModule, RouterLink, ComprobanteComponent, EnvioCorreoComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="mb-4 flex flex-wrap items-center justify-between gap-2 print:hidden">
@@ -122,7 +125,54 @@ import { ComprobanteComponent } from './comprobante.component';
         </div>
       }
 
-      <app-comprobante [venta]="v" />
+      <div class="grid items-start gap-4 lg:grid-cols-2">
+        <app-comprobante [venta]="v" [empresa]="empresa()" />
+        <div class="space-y-4 print:hidden">
+          @if (v.alumnos.length) {
+            <div class="card space-y-2 text-sm">
+              <p class="font-medium">Alumnos y licencias digitales</p>
+              @for (a of v.alumnos; track a.id) {
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="min-w-40 flex-1">
+                    {{ a.nombre }}
+                    @if (a.grado) {
+                      <span class="muted">· {{ a.grado }}</span>
+                    }
+                  </span>
+                  @if (editandoLicencia() === a.id) {
+                    <input
+                      class="input w-48 font-mono uppercase"
+                      maxlength="60"
+                      aria-label="Licencia"
+                      [(ngModel)]="licencia"
+                    />
+                    <button
+                      class="btn-primary btn-sm"
+                      [disabled]="procesando() || (!!licencia.trim() && !licenciaValida())"
+                      (click)="guardarLicencia(a.id)"
+                    >
+                      Guardar
+                    </button>
+                    <button class="btn-ghost btn-sm" (click)="editandoLicencia.set(null)">
+                      Cancelar
+                    </button>
+                  } @else {
+                    <span class="font-mono">{{ a.licencia ?? '— sin licencia —' }}</span>
+                    @if (v.estadoPago === 'PAGADA') {
+                      <button class="btn-ghost btn-sm" (click)="editarLicencia(a.id, a.licencia)">
+                        {{ a.licencia ? 'Corregir' : 'Agregar' }}
+                      </button>
+                    }
+                  }
+                </div>
+              }
+            </div>
+          }
+          <div class="card">
+            <app-envio-correo [venta]="v" (actualizada)="venta.set($event)" />
+          </div>
+        </div>
+      </div>
     }
   `,
 })
@@ -132,6 +182,9 @@ export class VentaDetalleComponent implements OnInit {
   private readonly toast = inject(ToastService);
   private readonly auth = inject(AuthService);
   readonly venta = signal<Venta | null>(null);
+  readonly empresa = signal<Empresa | null>(null);
+  readonly editandoLicencia = signal<number | null>(null);
+  licencia = '';
   readonly anulando = signal(false);
   readonly procesando = signal(false);
   readonly aEntregar = signal<Record<number, number>>({});
@@ -159,12 +212,37 @@ export class VentaDetalleComponent implements OnInit {
   }
 
   cargar() {
-    this.api.venta(Number(this.id())).subscribe({
-      next: (v) => {
-        this.venta.set(v);
+    this.api.comprobante(Number(this.id())).subscribe({
+      next: ({ venta, empresa }) => {
+        this.venta.set(venta);
+        this.empresa.set(empresa);
         this.aEntregar.set({});
       },
       error: (e) => this.toast.error(mensajeError(e)),
+    });
+  }
+
+  editarLicencia(id: number, actual: string | null) {
+    this.licencia = actual ?? '';
+    this.editandoLicencia.set(id);
+  }
+  licenciaValida() {
+    return LICENCIA.test(this.licencia.trim());
+  }
+  guardarLicencia(ventaAlumnoId: number) {
+    this.procesando.set(true);
+    const l = this.licencia.trim().toUpperCase();
+    this.api.editarLicencia(Number(this.id()), ventaAlumnoId, l || null).subscribe({
+      next: (v) => {
+        this.procesando.set(false);
+        this.venta.set(v);
+        this.editandoLicencia.set(null);
+        this.toast.ok('Licencia actualizada');
+      },
+      error: (e) => {
+        this.procesando.set(false);
+        this.toast.error(mensajeError(e));
+      },
     });
   }
 

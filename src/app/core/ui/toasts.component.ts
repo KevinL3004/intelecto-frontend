@@ -6,7 +6,10 @@ import { ToastService } from './toast.service';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div class="fixed bottom-4 right-4 z-50 flex w-80 flex-col gap-2" aria-live="polite">
+    <div
+      class="fixed bottom-4 right-4 z-50 flex w-80 flex-col gap-2 print:hidden"
+      aria-live="polite"
+    >
       @for (t of toast.toasts(); track t.id) {
         <div
           class="card flex items-start justify-between gap-3 bg-white text-sm shadow-sm dark:bg-zinc-900"

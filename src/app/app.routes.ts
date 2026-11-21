@@ -31,6 +31,20 @@ export const routes: Routes = [
           import('./features/admin/personas/personas.component').then((m) => m.PersonasComponent),
       },
       {
+        path: 'alumnos',
+        canActivate: [roleGuard('ADMIN', 'CONTADOR')],
+        loadComponent: () =>
+          import('./features/admin/alumnos/alumnos.component').then((m) => m.AlumnosComponent),
+      },
+      {
+        path: 'admin/configuracion',
+        canActivate: [roleGuard('ADMIN')],
+        loadComponent: () =>
+          import('./features/admin/configuracion/configuracion.component').then(
+            (m) => m.ConfiguracionComponent,
+          ),
+      },
+      {
         path: 'admin/usuarios',
         canActivate: [roleGuard('ADMIN', 'CONTADOR')],
         loadComponent: () =>

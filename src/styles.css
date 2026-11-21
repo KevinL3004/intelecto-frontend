@@ -101,3 +101,17 @@
     @apply tabular-nums;
   }
 }
+
+/* Impresión de comprobantes en impresora térmica (rollo de 80 mm).
+   Sin márgenes de página: el ancho lo da el ticket (72 mm). En el diálogo de impresión elija la
+   impresora térmica, tamaño de papel del rollo y "Márgenes: ninguno". */
+@media print {
+  @page {
+    margin: 0;
+  }
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+}

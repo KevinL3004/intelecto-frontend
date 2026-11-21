@@ -18,24 +18,49 @@ import { mensajeError } from '../../core/http/api-error';
 import { CatalogoApi, Combo, FilaPrecio, Grado } from '../../core/catalogo/catalogo.api';
 import { AdminApi, Persona } from '../../core/admin/admin.api';
 import {
+  Alumno,
   CajaDisponible,
   Conteo,
   Cotizacion,
   Denominacion,
+  Empresa,
   ESTADO_LINEA,
   Metodo,
   PagoEntrada,
   Venta,
+  VentaInput,
   VentasApi,
 } from '../../core/ventas/ventas.api';
 import { ConteoComponent } from '../../shared/conteo.component';
 import { ComprobanteComponent } from '../ventas/comprobante.component';
+import { EnvioCorreoComponent } from '../ventas/envio-correo.component';
 
 interface Linea {
   libroId: number;
   titulo: string;
   cantidad: number;
 }
+interface Bloque {
+  /** Identificador local (para el @for); no va al backend. */
+  clave: number;
+  alumnoId: number | null;
+  nombres: string;
+  apellidos: string;
+  gradoId: number | null;
+  comboId: number | null;
+  licencia: string;
+  lineas: Linea[];
+}
+/** Igual que el backend: letras, números, punto, guion y guion bajo; 3 a 60. */
+const LICENCIA = /^[A-Za-z0-9][A-Za-z0-9._-]{2,59}$/;
+const K_AUTO_IMPRIMIR = 'svi.pos.autoImprimir';
+const leerAutoImprimir = () => {
+  try {
+    return localStorage.getItem(K_AUTO_IMPRIMIR) !== '0';
+  } catch {
+    return true;
+  }
+};
 interface PagoForm {
   metodoPagoId: number;
   montoBase: string;
@@ -50,7 +75,14 @@ interface PagoForm {
  */
 @Component({
   selector: 'app-pos',
-  imports: [FormsModule, DatePipe, RouterLink, ConteoComponent, ComprobanteComponent],
+  imports: [
+    FormsModule,
+    DatePipe,
+    RouterLink,
+    ConteoComponent,
+    ComprobanteComponent,
+    EnvioCorreoComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (cargando()) {
@@ -104,10 +136,28 @@ interface PagoForm {
       }
     } @else if (comprobante()) {
       <!-- ================= COMPROBANTE ================= -->
-      <app-comprobante [venta]="comprobante()!" />
-      <div class="mt-4 flex justify-end gap-2 print:hidden">
-        <button class="btn-secondary" (click)="imprimir()">Imprimir</button>
-        <button class="btn-primary" (click)="nuevaVenta()">Nueva venta (F2)</button>
+      <div class="grid items-start gap-4 lg:grid-cols-2">
+        <app-comprobante [venta]="comprobante()!" [empresa]="empresa()" />
+        <div class="space-y-4 print:hidden">
+          <div class="card space-y-3">
+            <p class="font-medium">Venta {{ comprobante()!.codigo }} registrada</p>
+            <div class="flex flex-wrap gap-2">
+              <button class="btn-primary" (click)="imprimir()">Imprimir comprobante</button>
+              <button class="btn-secondary" (click)="nuevaVenta()">Nueva venta (F2)</button>
+            </div>
+            <label class="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                [ngModel]="autoImprimir()"
+                (ngModelChange)="cambiarAutoImprimir($event)"
+              />
+              Abrir la impresión automáticamente al cobrar
+            </label>
+          </div>
+          <div class="card">
+            <app-envio-correo [venta]="comprobante()!" (actualizada)="comprobante.set($event)" />
+          </div>
+        </div>
       </div>
     } @else {
       <!-- ================= VENTA ================= -->
@@ -175,12 +225,24 @@ interface PagoForm {
             </div>
             @if (nuevoCliente()) {
               <div
-                class="grid gap-2 rounded-lg border border-dashed border-zinc-300 p-3 sm:col-span-2 sm:grid-cols-4 dark:border-zinc-700"
+                class="grid gap-2 rounded-lg border border-dashed border-zinc-300 p-3 sm:col-span-2 sm:grid-cols-3 dark:border-zinc-700"
               >
                 <input class="input" placeholder="Nombres" [(ngModel)]="nc.nombres" />
                 <input class="input" placeholder="Apellidos" [(ngModel)]="nc.apellidos" />
                 <input class="input uppercase" placeholder="NIT o CF" [(ngModel)]="nc.nit" />
-                <div class="flex gap-2">
+                <input
+                  class="input"
+                  placeholder="Teléfono"
+                  inputmode="tel"
+                  [(ngModel)]="nc.telefono"
+                />
+                <input
+                  class="input sm:col-span-2"
+                  type="email"
+                  placeholder="Correo (para enviarle el comprobante)"
+                  [(ngModel)]="nc.correo"
+                />
+                <div class="flex justify-end gap-2 sm:col-span-3">
                   <button class="btn-secondary btn-sm" (click)="nuevoCliente.set(false)">
                     Cancelar
                   </button>
@@ -194,102 +256,199 @@ interface PagoForm {
                 </div>
               </div>
             }
-            <div>
-              <label class="label" for="alumno">Alumno (opcional)</label>
-              <input id="alumno" class="input" maxlength="150" [(ngModel)]="alumno" />
-            </div>
-            <div>
-              <label class="label" for="grado">Grado</label>
-              <select
-                id="grado"
-                class="input"
-                [ngModel]="gradoId()"
-                (ngModelChange)="elegirGrado($event)"
-              >
-                <option [ngValue]="null">— Sin grado —</option>
-                @for (g of grados(); track g.id) {
-                  <option [ngValue]="g.id">
-                    {{ g.nombre }}{{ comboDe(g.id) ? ' · combo' : '' }}
-                  </option>
+            @if (cliente(); as c) {
+              <p class="muted text-xs sm:col-span-2">
+                @if (c.correo) {
+                  El comprobante se enviará a <span class="font-mono">{{ c.correo }}</span>
+                } @else {
+                  Sin correo registrado: podrá escribir uno al terminar la venta.
                 }
-              </select>
-            </div>
+              </p>
+              @if (hijos().length) {
+                <div class="flex flex-wrap items-center gap-2 sm:col-span-2">
+                  <span class="muted text-xs">Alumnos registrados:</span>
+                  @for (h of hijos(); track h.id) {
+                    <button
+                      class="btn-secondary btn-sm"
+                      [disabled]="enVenta(h.id)"
+                      (click)="agregarHijo(h)"
+                    >
+                      + {{ h.nombre }}{{ h.grado ? ' · ' + h.grado : '' }}
+                    </button>
+                  }
+                </div>
+              }
+            }
           </div>
 
-          <div class="card overflow-x-auto p-0">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Libro</th>
-                  <th class="w-20 text-right">Cant.</th>
-                  <th class="w-24 text-right">Precio</th>
-                  <th class="w-24 text-right">Subtotal</th>
-                  <th>Entrega</th>
-                  <th class="w-8"></th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (l of lineas(); track l.libroId; let i = $index) {
-                  <tr>
-                    <td>{{ l.titulo }}</td>
-                    <td class="text-right">
-                      <input
-                        class="input w-16 text-right"
-                        type="number"
-                        min="1"
-                        max="99"
-                        [ngModel]="l.cantidad"
-                        (ngModelChange)="cambiarCantidad(i, $event)"
-                      />
-                    </td>
-                    <td class="money text-right">{{ precioDe(l.libroId) }}</td>
-                    <td class="money text-right">{{ subtotalDe(l.libroId) }}</td>
-                    <td class="text-xs">
-                      @for (p of planDe(l.libroId); track $index) {
-                        <span
-                          class="mb-0.5 mr-1 inline-block whitespace-nowrap"
-                          [class]="badge(p.estado)"
-                        >
-                          {{ p.cantidad }} · {{ textoEstado(p.estado)
-                          }}{{ p.colegioOrigen ? ' (' + p.colegioOrigen + ')' : '' }}
+          @for (b of bloques(); track b.clave; let i = $index) {
+            <div class="card space-y-3 p-0">
+              <div class="grid gap-3 p-4 pb-0 sm:grid-cols-6">
+                <div class="flex items-center justify-between sm:col-span-6">
+                  <p class="font-medium">
+                    Alumno {{ i + 1 }}
+                    @if (b.alumnoId) {
+                      <span class="badge-ok ml-1">registrado</span>
+                    }
+                  </p>
+                  @if (bloques().length > 1) {
+                    <button class="btn-ghost btn-sm" (click)="quitarAlumno(i)">
+                      Quitar alumno
+                    </button>
+                  }
+                </div>
+                <div class="sm:col-span-2">
+                  <label class="label" [for]="'an' + b.clave">Nombres</label>
+                  <input
+                    [id]="'an' + b.clave"
+                    class="input"
+                    maxlength="100"
+                    [readonly]="!!b.alumnoId"
+                    [ngModel]="b.nombres"
+                    (ngModelChange)="editarBloque(i, { nombres: $event })"
+                  />
+                </div>
+                <div class="sm:col-span-2">
+                  <label class="label" [for]="'aa' + b.clave">Apellidos</label>
+                  <input
+                    [id]="'aa' + b.clave"
+                    class="input"
+                    maxlength="100"
+                    [readonly]="!!b.alumnoId"
+                    [ngModel]="b.apellidos"
+                    (ngModelChange)="editarBloque(i, { apellidos: $event })"
+                  />
+                </div>
+                <div class="sm:col-span-2">
+                  <label class="label" [for]="'ag' + b.clave">Grado</label>
+                  <select
+                    [id]="'ag' + b.clave"
+                    class="input"
+                    [ngModel]="b.gradoId"
+                    (ngModelChange)="elegirGrado(i, $event)"
+                  >
+                    <option [ngValue]="null">— Sin grado —</option>
+                    @for (g of grados(); track g.id) {
+                      <option [ngValue]="g.id">
+                        {{ g.nombre }}{{ comboDe(g.id) ? ' · combo' : '' }}
+                      </option>
+                    }
+                  </select>
+                </div>
+                <div class="sm:col-span-3">
+                  <label class="label" [for]="'al' + b.clave">Licencia digital</label>
+                  <input
+                    [id]="'al' + b.clave"
+                    class="input font-mono uppercase"
+                    maxlength="60"
+                    autocomplete="off"
+                    placeholder="Número de licencia del sitio didáctico"
+                    [ngModel]="b.licencia"
+                    (ngModelChange)="editarBloque(i, { licencia: $event }, true)"
+                  />
+                  @if (b.licencia && !licenciaValida(b.licencia)) {
+                    <p class="field-error">Use letras, números y guiones (3 a 60)</p>
+                  }
+                </div>
+                <div class="flex items-end justify-end text-sm sm:col-span-3">
+                  @if (resumenGrupo(i); as r) {
+                    <span>
+                      @if (r.comboAplicado) {
+                        <span class="text-emerald-600 dark:text-emerald-400"
+                          >Combo −Q{{ r.descuento }} ·
                         </span>
                       }
-                      @if (errorDe(l.libroId); as e) {
-                        <span class="text-rose-600 dark:text-rose-400">{{ e }}</span>
-                      }
-                    </td>
-                    <td>
-                      <button class="btn-ghost btn-sm" aria-label="Quitar" (click)="quitar(i)">
-                        ✕
-                      </button>
-                    </td>
-                  </tr>
-                } @empty {
-                  <tr>
-                    <td colspan="6" class="py-6 text-center muted">
-                      Elija un grado para cargar su combo o agregue libros
-                    </td>
-                  </tr>
-                }
-                <tr>
-                  <td colspan="6">
-                    <select
-                      class="input"
-                      aria-label="Agregar libro"
-                      (change)="
-                        agregar(+$any($event.target).value || null); $any($event.target).value = ''
-                      "
-                    >
-                      <option value="">+ Agregar libro…</option>
-                      @for (f of librosDisponibles(); track f.libroId) {
-                        <option [value]="f.libroId">{{ f.titulo }} — Q{{ f.precio }}</option>
-                      }
-                    </select>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+                      Subtotal alumno:
+                      <strong class="money">Q{{ restar(r.subtotal, r.descuento) }}</strong>
+                    </span>
+                  }
+                </div>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Libro</th>
+                      <th class="w-20 text-right">Cant.</th>
+                      <th class="w-24 text-right">Precio</th>
+                      <th class="w-24 text-right">Subtotal</th>
+                      <th>Entrega</th>
+                      <th class="w-8"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (l of b.lineas; track l.libroId; let j = $index) {
+                      <tr>
+                        <td>{{ l.titulo }}</td>
+                        <td class="text-right">
+                          <input
+                            class="input w-16 text-right"
+                            type="number"
+                            min="1"
+                            max="99"
+                            [attr.aria-label]="'Cantidad de ' + l.titulo"
+                            [ngModel]="l.cantidad"
+                            (ngModelChange)="cambiarCantidad(i, j, $event)"
+                          />
+                        </td>
+                        <td class="money text-right">{{ precioDe(i, l.libroId) }}</td>
+                        <td class="money text-right">{{ subtotalDe(i, l.libroId) }}</td>
+                        <td class="text-xs">
+                          @for (p of planDe(i, l.libroId); track $index) {
+                            <span
+                              class="mb-0.5 mr-1 inline-block whitespace-nowrap"
+                              [class]="badge(p.estado)"
+                            >
+                              {{ p.cantidad }} · {{ textoEstado(p.estado)
+                              }}{{ p.colegioOrigen ? ' (' + p.colegioOrigen + ')' : '' }}
+                            </span>
+                          }
+                          @if (errorDe(i, l.libroId); as e) {
+                            <span class="text-rose-600 dark:text-rose-400">{{ e }}</span>
+                          }
+                        </td>
+                        <td>
+                          <button
+                            class="btn-ghost btn-sm"
+                            [attr.aria-label]="'Quitar ' + l.titulo"
+                            (click)="quitar(i, j)"
+                          >
+                            ✕
+                          </button>
+                        </td>
+                      </tr>
+                    } @empty {
+                      <tr>
+                        <td colspan="6" class="py-6 text-center muted">
+                          Elija el grado para cargar su combo o agregue libros
+                        </td>
+                      </tr>
+                    }
+                    <tr>
+                      <td colspan="6">
+                        <select
+                          class="input"
+                          aria-label="Agregar libro"
+                          (change)="
+                            agregar(i, +$any($event.target).value || null);
+                            $any($event.target).value = ''
+                          "
+                        >
+                          <option value="">+ Agregar libro…</option>
+                          @for (f of librosDisponibles(i); track f.libroId) {
+                            <option [value]="f.libroId">{{ f.titulo }} — Q{{ f.precio }}</option>
+                          }
+                        </select>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
+          <button class="btn-secondary w-full" (click)="agregarAlumno()">
+            + Agregar otro alumno (hermano)
+          </button>
           <label class="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -303,12 +462,26 @@ interface PagoForm {
         <!-- Columna derecha: totales y cobro -->
         <div class="space-y-4 lg:col-span-2">
           <div class="card space-y-1 text-sm">
+            @if (bloques().length > 1) {
+              @for (b of bloques(); track b.clave; let i = $index) {
+                <div class="muted flex justify-between">
+                  <span>{{ nombreBloque(b, i) }}</span>
+                  <span class="money"
+                    >Q{{
+                      resumenGrupo(i)
+                        ? restar(resumenGrupo(i)!.subtotal, resumenGrupo(i)!.descuento)
+                        : '…'
+                    }}</span
+                  >
+                </div>
+              }
+            }
             <div class="flex justify-between">
               <span>Suma de libros</span><span class="money">Q{{ cot()?.subtotal ?? '0.00' }}</span>
             </div>
             @if (cot()?.comboAplicado) {
               <div class="flex justify-between text-emerald-600 dark:text-emerald-400">
-                <span>Descuento combo completo</span
+                <span>Descuento por combos completos</span
                 ><span class="money">−Q{{ cot()!.descuento }}</span>
               </div>
             }
@@ -443,6 +616,11 @@ interface PagoForm {
             @for (e of erroresVisibles(); track e.error + e.message) {
               <p class="text-sm text-rose-600 dark:text-rose-400">{{ e.message }}</p>
             }
+            @if (faltaNombre()) {
+              <p class="text-sm text-amber-600 dark:text-amber-400">
+                Escriba el nombre de cada alumno (o deje un solo bloque sin nombre).
+              </p>
+            }
             <button
               class="btn-solid w-full py-3 text-base"
               [disabled]="!puedeCobrar()"
@@ -478,36 +656,39 @@ export class PosComponent implements OnInit, OnDestroy {
 
   // Venta
   private ciclo = new Date().getFullYear();
+  private siguienteClave = 1;
   readonly grados = signal<Grado[]>([]);
   readonly combos = signal<Combo[]>([]);
   readonly precios = signal<FilaPrecio[]>([]);
-  readonly gradoId = signal<number | null>(null);
-  readonly comboId = signal<number | null>(null);
-  readonly lineas = signal<Linea[]>([]);
+  /** Un bloque por alumno; cada uno con sus libros, grado y licencia. */
+  readonly bloques = signal<Bloque[]>([]);
   readonly entregarAhora = signal(true);
   readonly pagos = signal<PagoForm[]>([]);
   readonly cot = signal<Cotizacion | null>(null);
   readonly cotizando = signal(false);
   readonly comprobante = signal<Venta | null>(null);
-  alumno = '';
+  readonly empresa = signal<Empresa | null>(null);
+  readonly autoImprimir = signal(leerAutoImprimir());
 
   readonly cliente = signal<Persona | null>(null);
+  readonly hijos = signal<Alumno[]>([]);
   private consumidorFinal: Persona | null = null;
   readonly busquedaCliente = signal('');
   readonly resultadosCliente = signal<Persona[]>([]);
   readonly nuevoCliente = signal(false);
-  nc = { nombres: '', apellidos: '', nit: 'CF' };
+  nc = { nombres: '', apellidos: '', nit: 'CF', telefono: '', correo: '' };
   private timerCliente?: ReturnType<typeof setTimeout>;
 
   private readonly cotizar$ = new Subject<void>();
   private sub?: Subscription;
 
   readonly metodos = computed<Metodo[]>(() => this.cot()?.metodos ?? []);
-  readonly librosDisponibles = computed(() => {
-    const usados = new Set(this.lineas().map((l) => l.libroId));
-    return this.precios().filter((f) => f.precio !== null && !usados.has(f.libroId));
-  });
+  readonly hayLineas = computed(() => this.bloques().some((b) => b.lineas.length));
   readonly faltante = computed(() => this.cot()?.pagos?.faltante ?? null);
+  /** Con varios alumnos (o con licencia), cada uno necesita nombre. */
+  readonly faltaNombre = computed(
+    () => this.modoAlumnos() && this.bloques().some((b) => !b.alumnoId && !b.nombres.trim()),
+  );
   /** Mientras falte dinero, "no cuadra" se muestra como ayuda en el botón Completar, no como error. */
   readonly erroresVisibles = computed(() => {
     const e = this.cot()?.errores ?? [];
@@ -519,7 +700,10 @@ export class PosComponent implements OnInit, OnDestroy {
     () =>
       !this.procesando() &&
       !this.cotizando() &&
-      this.lineas().length > 0 &&
+      this.hayLineas() &&
+      this.bloques().every((b) => b.lineas.length) &&
+      !this.faltaNombre() &&
+      this.bloques().every((b) => !b.licencia || LICENCIA.test(b.licencia)) &&
       !!this.cot()?.pagos &&
       this.cot()!.errores.length === 0,
   );
@@ -529,7 +713,7 @@ export class PosComponent implements OnInit, OnDestroy {
       .pipe(
         debounceTime(250),
         switchMap(() => {
-          if (!this.lineas().length) {
+          if (!this.hayLineas()) {
             this.cotizando.set(false);
             return of(null);
           }
@@ -633,12 +817,10 @@ export class PosComponent implements OnInit, OnDestroy {
 
   nuevaVenta() {
     this.comprobante.set(null);
-    this.lineas.set([]);
-    this.gradoId.set(null);
-    this.comboId.set(null);
+    this.bloques.set([this.bloqueVacio()]);
     this.entregarAhora.set(true);
-    this.alumno = '';
     this.cliente.set(null);
+    this.hijos.set([]);
     this.busquedaCliente.set('');
     this.resultadosCliente.set([]);
     this.pagos.set([]);
@@ -663,6 +845,14 @@ export class PosComponent implements OnInit, OnDestroy {
     this.cliente.set(p);
     this.resultadosCliente.set([]);
     this.busquedaCliente.set('');
+    this.hijos.set([]);
+    this.api.alumnosDe(p.id).subscribe((h) => {
+      this.hijos.set(h);
+      // Un solo hijo registrado y la venta aún vacía: se precarga.
+      const b = this.bloques();
+      if (h.length === 1 && b.length === 1 && !b[0].nombres && !b[0].lineas.length)
+        this.agregarHijo(h[0]);
+    });
   }
   registrarCliente() {
     this.admin
@@ -670,58 +860,134 @@ export class PosComponent implements OnInit, OnDestroy {
         nombres: this.nc.nombres.trim(),
         apellidos: this.nc.apellidos.trim(),
         nit: this.nc.nit.trim() || 'CF',
+        ...(this.nc.telefono.trim() ? { telefono: this.nc.telefono.trim() } : {}),
+        ...(this.nc.correo.trim() ? { correo: this.nc.correo.trim() } : {}),
       })
       .subscribe({
         next: (p) => {
           this.elegirCliente(p);
           this.nuevoCliente.set(false);
-          this.nc = { nombres: '', apellidos: '', nit: 'CF' };
+          this.nc = { nombres: '', apellidos: '', nit: 'CF', telefono: '', correo: '' };
         },
         error: (e) => this.toast.error(mensajeError(e)),
       });
+  }
+
+  // ---------- alumnos ----------
+  private bloqueVacio(): Bloque {
+    return {
+      clave: this.siguienteClave++,
+      alumnoId: null,
+      nombres: '',
+      apellidos: '',
+      gradoId: null,
+      comboId: null,
+      licencia: '',
+      lineas: [],
+    };
+  }
+  agregarAlumno() {
+    this.bloques.update((bs) => [...bs, this.bloqueVacio()]);
+  }
+  quitarAlumno(i: number) {
+    this.bloques.update((bs) => bs.filter((_, j) => j !== i));
+    this.cotizar(true);
+  }
+  enVenta(alumnoId: number) {
+    return this.bloques().some((b) => b.alumnoId === alumnoId);
+  }
+  /** Agrega un alumno registrado del cliente (usa el primer bloque vacío si lo hay). */
+  agregarHijo(h: Alumno) {
+    const datos = { alumnoId: h.id, nombres: h.nombres, apellidos: h.apellidos };
+    let i = this.bloques().findIndex((b) => !b.alumnoId && !b.nombres.trim() && !b.lineas.length);
+    if (i < 0) {
+      this.agregarAlumno();
+      i = this.bloques().length - 1;
+    }
+    this.editarBloque(i, datos);
+    if (h.gradoId) this.elegirGrado(i, h.gradoId);
+  }
+  editarBloque(i: number, cambio: Partial<Bloque>, recotizar = false) {
+    if (cambio.licencia !== undefined) cambio.licencia = cambio.licencia.toUpperCase().trim();
+    this.bloques.update((bs) => bs.map((b, j) => (j === i ? { ...b, ...cambio } : b)));
+    // El modo (con o sin alumnos) puede cambiar: se vuelve a cotizar.
+    if (recotizar || cambio.nombres !== undefined) this.cotizar();
+  }
+  nombreBloque(b: Bloque, i: number) {
+    return `${b.nombres} ${b.apellidos}`.trim() || `Alumno ${i + 1}`;
+  }
+  licenciaValida(l: string) {
+    return LICENCIA.test(l);
+  }
+  resumenGrupo(i: number) {
+    return this.cot()?.grupos?.find((g) => g.indice === i) ?? null;
+  }
+  restar(a: string, b: string) {
+    return ((Math.round(Number(a) * 100) - Math.round(Number(b) * 100)) / 100).toFixed(2);
   }
 
   // ---------- libros ----------
   comboDe(gradoId: number) {
     return this.combos().find((c) => c.gradoId === gradoId) ?? null;
   }
-  elegirGrado(gradoId: number | null) {
-    this.gradoId.set(gradoId);
+  elegirGrado(i: number, gradoId: number | null) {
     const combo = gradoId ? this.comboDe(gradoId) : null;
-    this.comboId.set(combo?.id ?? null);
-    if (combo) {
-      this.lineas.set(
-        combo.libros.map((l) => ({ libroId: l.libroId, titulo: l.titulo, cantidad: l.cantidad })),
-      );
-      this.cotizar(true);
-    }
+    this.bloques.update((bs) =>
+      bs.map((b, j) =>
+        j !== i
+          ? b
+          : {
+              ...b,
+              gradoId,
+              comboId: combo?.id ?? null,
+              lineas: combo
+                ? combo.libros.map((l) => ({
+                    libroId: l.libroId,
+                    titulo: l.titulo,
+                    cantidad: l.cantidad,
+                  }))
+                : b.lineas,
+            },
+      ),
+    );
+    if (combo) this.cotizar(true);
   }
-  agregar(libroId: number | null) {
+  librosDisponibles(i: number) {
+    const usados = new Set(this.bloques()[i]?.lineas.map((l) => l.libroId));
+    return this.precios().filter((f) => f.precio !== null && !usados.has(f.libroId));
+  }
+  private lineasDe(i: number, fn: (ls: Linea[]) => Linea[]) {
+    this.bloques.update((bs) => bs.map((b, j) => (j === i ? { ...b, lineas: fn(b.lineas) } : b)));
+    this.cotizar(true);
+  }
+  agregar(i: number, libroId: number | null) {
     const f = this.precios().find((x) => x.libroId === libroId);
     if (!f) return;
-    this.lineas.update((ls) => [...ls, { libroId: f.libroId, titulo: f.titulo, cantidad: 1 }]);
-    this.cotizar(true);
+    this.lineasDe(i, (ls) => [...ls, { libroId: f.libroId, titulo: f.titulo, cantidad: 1 }]);
   }
-  quitar(i: number) {
-    this.lineas.update((ls) => ls.filter((_, j) => j !== i));
-    this.cotizar(true);
+  quitar(i: number, j: number) {
+    this.lineasDe(i, (ls) => ls.filter((_, k) => k !== j));
   }
-  cambiarCantidad(i: number, v: number) {
+  cambiarCantidad(i: number, j: number, v: number) {
     const n = Math.min(99, Math.max(1, Math.floor(Number(v) || 1)));
-    this.lineas.update((ls) => ls.map((l, j) => (j === i ? { ...l, cantidad: n } : l)));
-    this.cotizar(true);
+    this.lineasDe(i, (ls) => ls.map((l, k) => (k === j ? { ...l, cantidad: n } : l)));
   }
-  planDe(libroId: number) {
-    return (this.cot()?.lineas ?? []).filter((l) => l.libroId === libroId && l.estado);
+  planDe(i: number, libroId: number) {
+    return (this.cot()?.lineas ?? []).filter(
+      (l) => l.grupo === i && l.libroId === libroId && l.estado,
+    );
   }
-  errorDe(libroId: number) {
-    return this.cot()?.lineas.find((l) => l.libroId === libroId && l.error)?.error ?? null;
+  errorDe(i: number, libroId: number) {
+    return (
+      this.cot()?.lineas.find((l) => l.grupo === i && l.libroId === libroId && l.error)?.error ??
+      null
+    );
   }
-  precioDe(libroId: number) {
-    return this.cot()?.lineas.find((l) => l.libroId === libroId)?.precio ?? '…';
+  precioDe(i: number, libroId: number) {
+    return this.cot()?.lineas.find((l) => l.grupo === i && l.libroId === libroId)?.precio ?? '…';
   }
-  subtotalDe(libroId: number) {
-    const ls = this.planDe(libroId);
+  subtotalDe(i: number, libroId: number) {
+    const ls = this.planDe(i, libroId);
     if (!ls.length) return '…';
     // Solo para mostrar: suma de subtotales calculados por el backend.
     return (ls.reduce((a, l) => a + Math.round(Number(l.subtotal) * 100), 0) / 100).toFixed(2);
@@ -776,7 +1042,16 @@ export class PosComponent implements OnInit, OnDestroy {
     this.editarPago(i, { montoBase: nuevo > 0 ? nuevo.toFixed(2) : '' });
   }
 
-  private input() {
+  /**
+   * Venta "por alumno" salvo el caso simple: un único bloque sin nombre ni licencia
+   * (p. ej. alguien que solo compra un libro); ese va como venta sin alumno.
+   */
+  private modoAlumnos() {
+    const bs = this.bloques();
+    return !(bs.length === 1 && !bs[0].alumnoId && !bs[0].nombres.trim() && !bs[0].licencia);
+  }
+
+  private input(): VentaInput {
     const recargo = new Map(this.metodos().map((m) => [m.id, m.recargoPct]));
     const pagos: PagoEntrada[] = this.pagos()
       .filter((p) => p.montoBase)
@@ -789,11 +1064,27 @@ export class PosComponent implements OnInit, OnDestroy {
         // Recargo que el cajero está viendo; si cambió, el backend avisa (RECARGO_CAMBIO).
         ...(recargo.has(p.metodoPagoId) ? { recargoPct: recargo.get(p.metodoPagoId) } : {}),
       }));
-    return {
-      comboId: this.comboId() ?? undefined,
-      lineas: this.lineas().map((l) => ({ libroId: l.libroId, cantidad: l.cantidad })),
+    const lineas = (b: Bloque) =>
+      b.lineas.map((l) => ({ libroId: l.libroId, cantidad: l.cantidad }));
+    const base = {
       entregarAhora: this.entregarAhora(),
       pagos: this.pagos().length ? pagos : undefined,
+    };
+    if (!this.modoAlumnos()) {
+      const b = this.bloques()[0];
+      return { ...base, comboId: b?.comboId ?? undefined, lineas: b ? lineas(b) : [] };
+    }
+    return {
+      ...base,
+      alumnos: this.bloques().map((b) => ({
+        ...(b.alumnoId
+          ? { alumnoId: b.alumnoId }
+          : { nombres: b.nombres.trim(), apellidos: b.apellidos.trim() }),
+        ...(b.gradoId ? { gradoId: b.gradoId } : {}),
+        ...(b.comboId ? { comboId: b.comboId } : {}),
+        ...(b.licencia && LICENCIA.test(b.licencia) ? { licencia: b.licencia } : {}),
+        lineas: lineas(b),
+      })),
     };
   }
 
@@ -803,7 +1094,7 @@ export class PosComponent implements OnInit, OnDestroy {
    */
   cotizar(lineasCambiaron = false) {
     this.cotizando.set(true);
-    if (lineasCambiaron && this.pagos().length <= 1 && this.lineas().length) {
+    if (lineasCambiaron && this.pagos().length <= 1 && this.hayLineas()) {
       this.api.cotizar({ ...this.input(), pagos: undefined }).subscribe({
         next: (c) => {
           const actual = this.pagos()[0];
@@ -835,22 +1126,25 @@ export class PosComponent implements OnInit, OnDestroy {
       this.toast.error('Elija un cliente');
       return;
     }
+    const b = this.bloques()[0];
     this.procesando.set(true);
     this.api
       .crearVenta({
         ...this.input(),
         clienteId: cliente.id,
-        alumno: this.alumno.trim() || undefined,
-        gradoId: this.gradoId() ?? undefined,
+        ...(!this.modoAlumnos() && b?.gradoId ? { gradoId: b.gradoId } : {}),
       })
+      .pipe(switchMap((v) => this.api.comprobante(v.id)))
       .subscribe({
-        next: (v) => {
+        next: ({ venta, empresa }) => {
           this.procesando.set(false);
-          this.comprobante.set(v);
-          this.toast.ok(`Venta ${v.codigo} registrada`);
+          this.empresa.set(empresa);
+          this.comprobante.set(venta);
+          this.toast.ok(`Venta ${venta.codigo} registrada`);
+          if (this.autoImprimir()) setTimeout(() => this.imprimir(), 300);
           // Refresca existencias/precios para la siguiente venta.
           this.catalogo
-            .precios(v.colegioId, this.ciclo)
+            .precios(venta.colegioId, this.ciclo)
             .subscribe((p) => this.precios.set(p.items));
         },
         error: (e) => {
@@ -860,6 +1154,15 @@ export class PosComponent implements OnInit, OnDestroy {
           this.cotizar();
         },
       });
+  }
+
+  cambiarAutoImprimir(v: boolean) {
+    this.autoImprimir.set(v);
+    try {
+      localStorage.setItem(K_AUTO_IMPRIMIR, v ? '1' : '0');
+    } catch {
+      /* sin almacenamiento: solo dura esta sesión */
+    }
   }
 
   imprimir() {

@@ -23,6 +23,13 @@ export type PersonaForm = {
   correo?: string;
 };
 
+export interface Parametro {
+  clave: string;
+  valor: string;
+  descripcion: string | null;
+  actualizadoEn: string;
+}
+
 export interface UsuarioAdmin {
   id: number;
   username: string;
@@ -105,5 +112,17 @@ export class AdminApi {
   }
   eliminarCaja(id: number) {
     return this.http.delete<{ resultado: 'ELIMINADO' | 'DESACTIVADO' }>(`${this.api}/cajas/${id}`);
+  }
+
+  parametros() {
+    return this.http.get<Parametro[]>(`${this.api}/config/parametros`);
+  }
+  editarParametro(clave: string, valor: string) {
+    return this.http.patch<Parametro>(
+      `${this.api}/config/parametros/${encodeURIComponent(clave)}`,
+      {
+        valor,
+      },
+    );
   }
 }

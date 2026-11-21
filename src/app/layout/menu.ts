@@ -75,6 +75,7 @@ export const MENU: MenuGrupo[] = [
     titulo: 'Clientes',
     items: [
       { label: 'Personas y clientes', ruta: '/personas', roles: ['ADMIN', 'CONTADOR', 'CAJERO'] },
+      { label: 'Alumnos', ruta: '/alumnos', roles: ['ADMIN', 'CONTADOR'] },
     ],
   },
   {
@@ -88,6 +89,7 @@ export const MENU: MenuGrupo[] = [
         ruta: '/admin/metodos-pago',
         roles: ['ADMIN', 'CONTADOR', 'CAJERO'],
       },
+      { label: 'Configuración', ruta: '/admin/configuracion', roles: ['ADMIN'] },
     ],
   },
 ];

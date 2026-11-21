@@ -72,6 +72,18 @@ const REPORTES: Definicion[] = [
     ],
   },
   {
+    tipo: 'alumnos',
+    nombre: 'Alumnos y licencias',
+    descripcion:
+      'Cada alumno atendido con su padre o encargado, contacto, útiles, licencia digital y total.',
+    roles: SUP,
+    filtros: ['fechas', 'colegio', 'estado'],
+    estados: [
+      { valor: 'PAGADA', texto: 'Pagadas' },
+      { valor: 'ANULADA', texto: 'Anuladas' },
+    ],
+  },
+  {
     tipo: 'cuadres',
     nombre: 'Cuadres de caja',
     descripcion: 'Turnos con fondo, esperado contra contado, diferencias y validación.',

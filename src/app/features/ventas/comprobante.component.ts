@@ -1,127 +1,271 @@
 import { Component, computed, input, ChangeDetectionStrategy } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { ESTADO_LINEA, Venta } from '../../core/ventas/ventas.api';
+import { Empresa, ESTADO_LINEA, Venta } from '../../core/ventas/ventas.api';
 
-/** Comprobante de venta (RF-09), con los libros pendientes de entrega. Se imprime con el navegador. */
+type Linea = Venta['lineas'][number];
+interface Bloque {
+  titulo: string;
+  grado: string | null;
+  licencia: string | null;
+  descuento: string;
+  lineas: Linea[];
+}
+
+/**
+ * Comprobante de compra en formato ticket para impresora térmica de 80 mm (área útil 72 mm).
+ * Agrupa los útiles por alumno, con su grado y licencia digital. Se imprime con el navegador:
+ * todo lo demás de la página lleva `print:hidden`.
+ */
 @Component({
   selector: 'app-comprobante',
   imports: [DatePipe],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @let v = venta();
-    <div class="card mx-auto max-w-xl space-y-3 text-sm print:max-w-none print:border-0 print:p-0">
-      <div class="text-center">
-        <p class="text-base font-semibold tracking-wide">INTELECTO</p>
-        <p class="muted">Comprobante de venta · {{ v.colegio }}</p>
-      </div>
-      <div class="grid grid-cols-2 gap-x-4 gap-y-0.5">
-        <span class="muted">Venta</span><span class="text-right font-mono">{{ v.codigo }}</span>
-        <span class="muted">Fecha</span
-        ><span class="text-right">{{ v.fecha | date: 'dd/MM/yyyy HH:mm' }}</span>
-        @if (v.cajaNumero) {
-          <span class="muted">Caja</span
-          ><span class="text-right">{{ v.cajaNumero }} · {{ v.usuario }}</span>
+    @let e = empresa();
+    <article class="ticket" aria-label="Comprobante de compra">
+      <header class="centro">
+        <p class="grande">{{ e?.nombre ?? 'Intelecto' }}</p>
+        @if (e?.nit) {
+          <p>NIT {{ e!.nit }}</p>
         }
-        <span class="muted">Cliente</span><span class="text-right">{{ v.cliente }}</span>
-        <span class="muted">NIT</span><span class="text-right font-mono">{{ v.nit }}</span>
-        @if (v.alumno) {
-          <span class="muted">Alumno</span
-          ><span class="text-right">{{ v.alumno }}{{ v.grado ? ' · ' + v.grado : '' }}</span>
+        @if (e?.direccion) {
+          <p>{{ e!.direccion }}</p>
         }
+        @if (e?.telefono || e?.correo) {
+          <p>{{ e?.telefono }}{{ e?.telefono && e?.correo ? ' · ' : '' }}{{ e?.correo }}</p>
+        }
+        <p class="separa">COMPROBANTE DE COMPRA</p>
+        <p>{{ v.colegio }}</p>
+      </header>
+
+      <div class="linea"></div>
+      <div class="par">
+        <span>Venta</span><strong>{{ v.codigo }}</strong>
       </div>
-      @if (v.estadoPago === 'ANULADA') {
-        <p class="rounded-lg border border-rose-500 p-2 text-center font-medium text-rose-600">
-          ANULADA · {{ v.motivoAnulacion }}
-        </p>
+      <div class="par">
+        <span>Fecha</span><span>{{ v.fecha | date: 'dd/MM/yyyy HH:mm' }}</span>
+      </div>
+      @if (v.cajaNumero) {
+        <div class="par">
+          <span>Caja</span><span>{{ v.cajaNumero }} · {{ v.usuario }}</span>
+        </div>
       }
-      <table class="w-full">
-        <thead>
-          <tr class="border-b border-zinc-200 text-left text-xs text-zinc-500 dark:border-zinc-800">
-            <th class="py-1">Libro</th>
-            <th class="py-1 text-right">Cant.</th>
-            <th class="py-1 text-right">Precio</th>
-            <th class="py-1 text-right">Subtotal</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (l of v.lineas; track l.id) {
-            <tr class="align-top">
-              <td class="py-1">
-                {{ l.titulo }}
-                @if (l.estado !== 'ENTREGADO') {
-                  <span class="block text-xs text-amber-600"
-                    >{{ estado(l.estado)
-                    }}{{ l.colegioOrigen ? ' (' + l.colegioOrigen + ')' : '' }}</span
-                  >
-                }
-              </td>
-              <td class="money py-1 text-right">{{ l.cantidad }}</td>
-              <td class="money py-1 text-right">{{ l.precioUnitario }}</td>
-              <td class="money py-1 text-right">{{ l.subtotal }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-      <div class="space-y-0.5 border-t border-zinc-200 pt-2 dark:border-zinc-800">
-        <div class="flex justify-between">
-          <span>Subtotal</span><span class="money">Q{{ v.subtotal }}</span>
-        </div>
-        @if (v.descuento !== '0.00') {
-          <div class="flex justify-between">
-            <span>Descuento combo</span><span class="money">−Q{{ v.descuento }}</span>
-          </div>
-        }
-        @if (v.recargo !== '0.00') {
-          <div class="flex justify-between">
-            <span>Recargo por tarjeta</span><span class="money">Q{{ v.recargo }}</span>
-          </div>
-        }
-        <div class="flex justify-between text-base font-semibold">
-          <span>Total</span><span class="money">Q{{ v.total }}</span>
-        </div>
+      <div class="par">
+        <span>Cliente</span><span class="der">{{ v.cliente }}</span>
       </div>
-      <div class="space-y-0.5 border-t border-zinc-200 pt-2 dark:border-zinc-800">
-        @for (p of v.pagos; track p.id) {
-          <div class="flex justify-between">
-            <span>
-              {{ p.nombre }}
-              @if (p.recargo !== '0.00') {
-                <span class="muted">(+{{ p.recargoPct }} % = Q{{ p.recargo }})</span>
+      <div class="par">
+        <span>NIT</span><span>{{ v.nit }}</span>
+      </div>
+
+      @if (v.estadoPago === 'ANULADA') {
+        <p class="anulada">*** VENTA ANULADA ***<br />{{ v.motivoAnulacion }}</p>
+      }
+
+      @for (b of bloques(); track $index) {
+        <section class="alumno">
+          <p class="nombre">ALUMNO: {{ b.titulo }}</p>
+          @if (b.grado) {
+            <p>Grado: {{ b.grado }}</p>
+          }
+          @if (b.licencia) {
+            <p class="licencia">
+              Licencia digital<br /><strong>{{ b.licencia }}</strong>
+              @if (e?.sitioLicencias) {
+                <br /><span class="chico">{{ e!.sitioLicencias }}</span>
               }
-              @if (p.referencia) {
-                <span class="muted"> · Ref. {{ p.referencia }}</span>
-              }
-            </span>
-            <span class="money">Q{{ p.montoTotal }}</span>
-          </div>
-          @if (p.vuelto && p.vuelto !== '0.00') {
-            <div class="muted flex justify-between pl-4 text-xs">
-              <span>Recibido Q{{ p.recibido }}</span
-              ><span>Vuelto Q{{ p.vuelto }}</span>
+            </p>
+          }
+          @for (l of b.lineas; track l.id) {
+            <div class="item">
+              <span>{{ l.cantidad }} × {{ l.titulo }}</span>
+              <span class="monto">Q{{ l.subtotal }}</span>
+            </div>
+            @if (l.estado !== 'ENTREGADO') {
+              <p class="estado">
+                ↳ {{ estado(l.estado) }}{{ l.colegioOrigen ? ' (' + l.colegioOrigen + ')' : '' }}
+              </p>
+            }
+          }
+          @if (b.descuento !== '0.00') {
+            <div class="item">
+              <span>Descuento combo</span><span class="monto">−Q{{ b.descuento }}</span>
             </div>
           }
-        }
+        </section>
+      }
+
+      <div class="linea"></div>
+      <div class="par">
+        <span>Subtotal</span><span>Q{{ v.subtotal }}</span>
       </div>
-      @if (pendientes().length) {
-        <div class="rounded-lg border border-amber-500 p-2 text-xs">
-          <p class="font-medium">Libros pendientes de entrega</p>
-          <p>Presente este comprobante para recogerlos:</p>
-          <ul class="list-inside list-disc">
-            @for (l of pendientes(); track l.id) {
-              <li>
-                {{ l.cantidad - l.cantidadEntregada }} × {{ l.titulo }} — {{ estado(l.estado) }}
-              </li>
-            }
-          </ul>
+      @if (v.descuento !== '0.00') {
+        <div class="par">
+          <span>Descuentos</span><span>−Q{{ v.descuento }}</span>
         </div>
       }
-    </div>
+      @if (v.recargo !== '0.00') {
+        <div class="par">
+          <span>Recargo tarjeta</span><span>Q{{ v.recargo }}</span>
+        </div>
+      }
+      <div class="par total">
+        <span>TOTAL</span><span>Q{{ v.total }}</span>
+      </div>
+      @for (p of v.pagos; track p.id) {
+        <div class="par chico">
+          <span
+            >{{ p.nombre }}{{ p.referencia ? ' · Ref. ' + p.referencia : ''
+            }}{{ p.recargo !== '0.00' ? ' (+' + p.recargoPct + '%)' : '' }}</span
+          >
+          <span>Q{{ p.montoTotal }}</span>
+        </div>
+        @if (p.vuelto && p.vuelto !== '0.00') {
+          <div class="par chico">
+            <span>Recibido Q{{ p.recibido }}</span
+            ><span>Vuelto Q{{ p.vuelto }}</span>
+          </div>
+        }
+      }
+
+      @if (pendientes()) {
+        <p class="aviso">
+          Hay libros pendientes de entrega. Presente este comprobante para recogerlos.
+        </p>
+      }
+      @if (e?.pie) {
+        <p class="centro chico pie">{{ e!.pie }}</p>
+      }
+      <p class="centro chico">{{ v.codigo }}</p>
+    </article>
+  `,
+  styles: `
+    /* Papel: blanco y negro siempre (también en modo oscuro), como saldrá impreso. */
+    .ticket {
+      width: 72mm;
+      max-width: 100%;
+      margin: 0 auto;
+      padding: 4mm 3mm;
+      background: #fff;
+      color: #000;
+      font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+      font-size: 11.5px;
+      line-height: 1.35;
+      box-shadow: 0 1px 4px rgb(0 0 0 / 0.15);
+      word-break: break-word;
+    }
+    p {
+      margin: 0;
+    }
+    .centro {
+      text-align: center;
+    }
+    .grande {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+    .separa {
+      margin-top: 2mm;
+      font-weight: 700;
+    }
+    .chico {
+      font-size: 10px;
+    }
+    .linea {
+      border-top: 1px dashed #000;
+      margin: 2mm 0;
+    }
+    .par,
+    .item {
+      display: flex;
+      justify-content: space-between;
+      gap: 2mm;
+    }
+    .der {
+      text-align: right;
+    }
+    .monto {
+      white-space: nowrap;
+    }
+    .alumno {
+      border-top: 1px dashed #000;
+      margin-top: 2mm;
+      padding-top: 2mm;
+    }
+    .nombre {
+      font-weight: 700;
+    }
+    .licencia {
+      margin: 1.5mm 0;
+      padding: 1.5mm;
+      border: 1px solid #000;
+      text-align: center;
+    }
+    .licencia strong {
+      font-size: 13px;
+      letter-spacing: 0.05em;
+    }
+    .estado {
+      padding-left: 3mm;
+      font-size: 10px;
+    }
+    .total {
+      margin-top: 1mm;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .anulada,
+    .aviso {
+      margin: 2mm 0;
+      padding: 1.5mm;
+      border: 1px solid #000;
+      text-align: center;
+      font-weight: 700;
+    }
+    .aviso {
+      font-weight: 400;
+      font-size: 10px;
+    }
+    .pie {
+      margin-top: 3mm;
+    }
+    @media print {
+      .ticket {
+        box-shadow: none;
+        padding: 0 1mm;
+      }
+    }
   `,
 })
 export class ComprobanteComponent {
   readonly venta = input.required<Venta>();
+  readonly empresa = input<Empresa | null>(null);
+
+  /** Útiles por alumno (en el orden de la venta); lo que no tiene alumno va al final. */
+  readonly bloques = computed<Bloque[]>(() => {
+    const v = this.venta();
+    const alumnos = v.alumnos ?? [];
+    const bloques: Bloque[] = alumnos.map((a) => ({
+      titulo: a.nombre,
+      grado: a.grado,
+      licencia: a.licencia,
+      descuento: a.descuento,
+      lineas: v.lineas.filter((l) => l.ventaAlumnoId === a.id),
+    }));
+    const sueltas = v.lineas.filter((l) => !l.ventaAlumnoId);
+    if (sueltas.length)
+      bloques.push({
+        titulo: v.alumno || (bloques.length ? 'Otros' : 'Libros'),
+        grado: alumnos.length ? null : v.grado,
+        licencia: null,
+        descuento: alumnos.length ? '0.00' : v.descuento,
+        lineas: sueltas,
+      });
+    return bloques;
+  });
   readonly pendientes = computed(() =>
-    this.venta().lineas.filter((l) => !['ENTREGADO', 'ANULADO'].includes(l.estado)),
+    this.venta().lineas.some((l) => !['ENTREGADO', 'ANULADO'].includes(l.estado)),
   );
   estado(e: string) {
     return ESTADO_LINEA[e as keyof typeof ESTADO_LINEA]?.texto ?? e;

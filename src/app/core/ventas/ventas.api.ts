@@ -142,6 +142,8 @@ export interface PagoEntrada {
   recargoPct?: string;
 }
 export interface LineaPlan {
+  /** Índice del alumno (bloque) al que pertenece. */
+  grupo: number;
   libroId: number;
   titulo: string;
   isbn: string | null;
@@ -157,6 +159,7 @@ export interface Cotizacion {
   colegio: string;
   ciclo: number;
   lineas: LineaPlan[];
+  grupos: { indice: number; subtotal: string; descuento: string; comboAplicado: boolean }[];
   subtotal: string;
   descuento: string;
   comboAplicado: boolean;
@@ -180,10 +183,21 @@ export interface Cotizacion {
   } | null;
   errores: { error: string; message: string }[];
 }
+/** Útiles de un alumno dentro de la venta. */
+export interface AlumnoVentaInput {
+  alumnoId?: number;
+  nombres?: string;
+  apellidos?: string;
+  gradoId?: number;
+  comboId?: number;
+  licencia?: string;
+  lineas: { libroId: number; cantidad: number }[];
+}
 export interface VentaInput {
   colegioId?: number;
   comboId?: number;
-  lineas: { libroId: number; cantidad: number }[];
+  lineas?: { libroId: number; cantidad: number }[];
+  alumnos?: AlumnoVentaInput[];
   entregarAhora?: boolean;
   pagos?: PagoEntrada[];
   clienteId?: number;
@@ -200,8 +214,12 @@ export interface Venta {
   clienteId: number;
   cliente: string;
   nit: string;
+  clienteTelefono: string | null;
+  clienteCorreo: string | null;
   alumno: string | null;
   grado: string | null;
+  alumnos: AlumnoDeVenta[];
+  correos: CorreoVenta[];
   subtotal: string;
   descuento: string;
   recargo: string;
@@ -217,6 +235,7 @@ export interface Venta {
   anuladaPor: string | null;
   lineas: {
     id: number;
+    ventaAlumnoId: number | null;
     libroId: number;
     titulo: string;
     isbn: string | null;
@@ -241,6 +260,66 @@ export interface Venta {
     referencia: string | null;
   }[];
 }
+export interface AlumnoDeVenta {
+  /** id del alumno dentro de la venta (venta_alumno). */
+  id: number;
+  alumnoId: number;
+  nombre: string;
+  gradoId: number | null;
+  grado: string | null;
+  licencia: string | null;
+  descuento: string;
+  comboId: number | null;
+}
+export interface CorreoVenta {
+  id: number;
+  destinatario: string;
+  estado: 'PENDIENTE' | 'ENVIADO' | 'FALLIDO';
+  intentos: number;
+  creadoEn: string;
+  enviadoEn: string | null;
+}
+export interface Empresa {
+  nombre: string;
+  nit: string | null;
+  direccion: string | null;
+  telefono: string | null;
+  correo: string | null;
+  sitioLicencias: string | null;
+  pie: string | null;
+}
+export interface Alumno {
+  id: number;
+  nombres: string;
+  apellidos: string;
+  nombre: string;
+  activo: boolean;
+  colegioId: number | null;
+  colegio: string | null;
+  gradoId: number | null;
+  grado: string | null;
+  encargados: {
+    personaId: number;
+    nombre: string;
+    nit: string;
+    telefono: string | null;
+    correo: string | null;
+    parentesco: string;
+  }[];
+}
+export interface AlumnoDetalle extends Alumno {
+  compras: {
+    ventaId: number;
+    codigo: string;
+    fecha: string;
+    estadoPago: string;
+    grado: string | null;
+    licencia: string | null;
+    colegio: string;
+    total: string;
+  }[];
+}
+
 export interface FilaVenta {
   id: number;
   codigo: string;
@@ -354,6 +433,55 @@ export class VentasApi {
   entregar(id: number, lineas: { detalleId: number; cantidad: number }[]) {
     return this.http.post<Venta>(`${this.api}/ventas/${id}/entregas`, { lineas });
   }
+  comprobante(id: number) {
+    return this.http.get<{ venta: Venta; empresa: Empresa }>(
+      `${this.api}/ventas/${id}/comprobante`,
+    );
+  }
+  enviarComprobante(id: number, dto: { correo?: string; guardarEnCliente?: boolean }) {
+    return this.http.post<Venta>(`${this.api}/ventas/${id}/comprobante/correo`, dto);
+  }
+  editarLicencia(id: number, ventaAlumnoId: number, licencia: string | null) {
+    return this.http.patch<Venta>(`${this.api}/ventas/${id}/alumnos/${ventaAlumnoId}/licencia`, {
+      licencia,
+    });
+  }
+
+  // Alumnos
+  alumnosDe(personaId: number) {
+    return this.http.get<Alumno[]>(`${this.api}/personas/${personaId}/alumnos`);
+  }
+  alumnos(f: { q?: string; colegioId?: number | null; page?: number; limit?: number }) {
+    let params = new HttpParams().set('page', f.page ?? 1).set('limit', f.limit ?? 30);
+    if (f.q) params = params.set('q', f.q);
+    if (f.colegioId) params = params.set('colegioId', f.colegioId);
+    return this.http.get<Paginated<Alumno>>(`${this.api}/alumnos`, { params });
+  }
+  alumno(id: number) {
+    return this.http.get<AlumnoDetalle>(`${this.api}/alumnos/${id}`);
+  }
+  editarAlumno(
+    id: number,
+    dto: Partial<{
+      nombres: string;
+      apellidos: string;
+      gradoId: number;
+      colegioId: number;
+      activo: boolean;
+    }>,
+  ) {
+    return this.http.patch<AlumnoDetalle>(`${this.api}/alumnos/${id}`, dto);
+  }
+  vincularEncargado(id: number, personaId: number, parentesco: string) {
+    return this.http.post<AlumnoDetalle>(`${this.api}/alumnos/${id}/encargados`, {
+      personaId,
+      parentesco,
+    });
+  }
+  desvincularEncargado(id: number, personaId: number) {
+    return this.http.delete<AlumnoDetalle>(`${this.api}/alumnos/${id}/encargados/${personaId}`);
+  }
+
   anular(id: number, dto: { motivo: string; devuelveLibros: boolean }) {
     return this.http.post<{
       reembolsoEfectivo: string;
