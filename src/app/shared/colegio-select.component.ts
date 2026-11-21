@@ -1,4 +1,4 @@
-import { Component, inject, model, OnInit, signal } from '@angular/core';
+import { Component, inject, model, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { AuthService } from '../core/auth/auth.service';
 import { Colegio, ColegiosService } from '../features/admin/colegios/colegios.service';
 
@@ -11,6 +11,7 @@ const K_COLEGIO = 'svi.colegioSeleccionado';
 @Component({
   selector: 'app-colegio-select',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     @if (fijo) {
       <span class="input inline-flex w-auto items-center">{{ nombreFijo }}</span>

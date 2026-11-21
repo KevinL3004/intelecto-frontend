@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ToastService } from '../../../core/ui/toast.service';
@@ -6,9 +6,10 @@ import { mensajeError } from '../../../core/http/api-error';
 import { CatalogoApi, Libro } from '../../../core/catalogo/catalogo.api';
 
 @Component({
-    selector: 'app-libros',
-    imports: [ReactiveFormsModule],
-    template: `
+  selector: 'app-libros',
+  imports: [ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: `
     <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
       <div>
         <h1 class="page-title">Libros</h1>
@@ -116,7 +117,7 @@ import { CatalogoApi, Libro } from '../../../core/catalogo/catalogo.api';
         </button>
       </div>
     }
-  `
+  `,
 })
 export class LibrosComponent implements OnInit {
   private readonly api = inject(CatalogoApi);

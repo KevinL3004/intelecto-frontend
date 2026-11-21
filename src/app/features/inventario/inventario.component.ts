@@ -1,4 +1,12 @@
-import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+  untracked,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth/auth.service';
@@ -23,9 +31,10 @@ const TIPO_LABEL: Record<string, string> = {
 
 /** Existencias por colegio, ingreso de mercadería, ajustes por conteo y kardex por libro. */
 @Component({
-    selector: 'app-inventario',
-    imports: [FormsModule, DatePipe, ColegioSelectComponent],
-    template: `
+  selector: 'app-inventario',
+  imports: [FormsModule, DatePipe, ColegioSelectComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: `
     <div class="mb-4 flex flex-wrap items-end justify-between gap-2">
       <div>
         <h1 class="page-title">Inventario</h1>
@@ -262,7 +271,7 @@ const TIPO_LABEL: Record<string, string> = {
         </tbody>
       </table>
     </div>
-  `
+  `,
 })
 export class InventarioComponent {
   private readonly api = inject(CatalogoApi);

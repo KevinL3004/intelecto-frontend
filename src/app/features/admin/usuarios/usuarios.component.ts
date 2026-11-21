@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -12,9 +12,10 @@ const PASSWORD = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
 /** Usuarios del sistema. Admin administra; Contador solo consulta. */
 @Component({
-    selector: 'app-usuarios',
-    imports: [ReactiveFormsModule, DatePipe],
-    template: `
+  selector: 'app-usuarios',
+  imports: [ReactiveFormsModule, DatePipe],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: `
     <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
       <div>
         <h1 class="page-title">Usuarios</h1>
@@ -202,7 +203,7 @@ const PASSWORD = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
         </tbody>
       </table>
     </div>
-  `
+  `,
 })
 export class UsuariosComponent implements OnInit {
   private readonly api = inject(AdminApi);

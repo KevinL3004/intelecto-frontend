@@ -1,4 +1,11 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  OnInit,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -111,9 +118,10 @@ const hoyISO = () => {
 };
 
 @Component({
-    selector: 'app-reportes',
-    imports: [FormsModule, DatePipe, QuetzalPipe],
-    template: `
+  selector: 'app-reportes',
+  imports: [FormsModule, DatePipe, QuetzalPipe],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: `
     <h1 class="page-title mb-4">Reportes</h1>
     <div class="space-y-4">
       <nav class="flex flex-wrap gap-1" aria-label="Reportes">
@@ -272,7 +280,7 @@ const hoyISO = () => {
         }
       </div>
     </div>
-  `
+  `,
 })
 export class ReportesComponent implements OnInit {
   private readonly api = inject(ReportesApi);

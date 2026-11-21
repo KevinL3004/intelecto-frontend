@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../core/auth/auth.service';
 import { ROL_LABEL } from '../core/auth/auth.models';
@@ -7,9 +7,10 @@ import { MENU } from './menu';
 import { VentasApi } from '../core/ventas/ventas.api';
 
 @Component({
-    selector: 'app-shell',
-    imports: [RouterOutlet, RouterLink, RouterLinkActive],
-    template: `
+  selector: 'app-shell',
+  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: `
     <div class="flex min-h-screen">
       <!-- Barra lateral -->
       <aside
@@ -89,7 +90,7 @@ import { VentasApi } from '../core/ventas/ventas.api';
         </main>
       </div>
     </div>
-  `
+  `,
 })
 export class ShellComponent {
   readonly auth = inject(AuthService);

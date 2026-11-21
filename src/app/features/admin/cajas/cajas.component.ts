@@ -1,4 +1,11 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  OnInit,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ToastService } from '../../../core/ui/toast.service';
@@ -10,9 +17,10 @@ const MONTO = /^\d{1,10}(\.\d{1,2})?$/;
 
 /** Cajas por colegio con su fondo (sencillo) asignado. Admin administra; Contador consulta. */
 @Component({
-    selector: 'app-cajas',
-    imports: [ReactiveFormsModule],
-    template: `
+  selector: 'app-cajas',
+  imports: [ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: `
     <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
       <div>
         <h1 class="page-title">Cajas</h1>
@@ -129,7 +137,7 @@ const MONTO = /^\d{1,10}(\.\d{1,2})?$/;
         </tbody>
       </table>
     </div>
-  `
+  `,
 })
 export class CajasComponent implements OnInit {
   private readonly api = inject(AdminApi);

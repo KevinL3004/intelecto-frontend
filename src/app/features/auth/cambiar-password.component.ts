@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import {
   AbstractControl,
   FormBuilder,
@@ -15,9 +15,10 @@ const iguales = (g: AbstractControl): ValidationErrors | null =>
   g.get('nueva')?.value === g.get('confirmar')?.value ? null : { distintas: true };
 
 @Component({
-    selector: 'app-cambiar-password',
-    imports: [ReactiveFormsModule],
-    template: `
+  selector: 'app-cambiar-password',
+  imports: [ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: `
     <div class="flex min-h-screen items-center justify-center p-4">
       <form class="card w-full max-w-sm space-y-4 p-6" [formGroup]="form" (ngSubmit)="guardar()">
         <div>
@@ -68,7 +69,7 @@ const iguales = (g: AbstractControl): ValidationErrors | null =>
         </div>
       </form>
     </div>
-  `
+  `,
 })
 export class CambiarPasswordComponent {
   readonly auth = inject(AuthService);

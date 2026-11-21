@@ -1,10 +1,11 @@
-import { Component, computed, input, output, signal } from '@angular/core';
+import { Component, computed, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
 import { Conteo, Denominacion } from '../core/ventas/ventas.api';
 
 /** Conteo de efectivo por billete y moneda. Emite el conteo cada vez que cambia. */
 @Component({
   selector: 'app-conteo',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="grid gap-x-6 gap-y-2 sm:grid-cols-2">
       @for (grupo of grupos(); track grupo.tipo) {

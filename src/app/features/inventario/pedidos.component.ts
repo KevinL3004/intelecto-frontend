@@ -1,4 +1,11 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  OnInit,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -24,9 +31,10 @@ interface ItemForm {
 
 /** CU-14: consolidado por pedir (R-06), pedidos a proveedor y recepción total o parcial. */
 @Component({
-    selector: 'app-pedidos',
-    imports: [DatePipe, FormsModule, RouterLink],
-    template: `
+  selector: 'app-pedidos',
+  imports: [DatePipe, FormsModule, RouterLink],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: `
     <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
       <div>
         <h1 class="page-title">Pedidos a proveedor</h1>
@@ -264,7 +272,7 @@ interface ItemForm {
         </tbody>
       </table>
     </div>
-  `
+  `,
 })
 export class PedidosComponent implements OnInit {
   private readonly api = inject(LogisticaApi);

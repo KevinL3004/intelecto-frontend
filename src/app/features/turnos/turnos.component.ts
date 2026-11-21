@@ -1,5 +1,5 @@
 import { QuetzalPipe } from '../../shared/quetzal.pipe';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
@@ -9,9 +9,10 @@ import { ESTADO_TURNO, EstadoTurno, FilaTurno, VentasApi } from '../../core/vent
 
 /** Turnos y cierres (R-07). Admin/Contador ven todos; el cajero solo los suyos. */
 @Component({
-    selector: 'app-turnos',
-    imports: [QuetzalPipe, DatePipe, RouterLink],
-    template: `
+  selector: 'app-turnos',
+  imports: [QuetzalPipe, DatePipe, RouterLink],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: `
     <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
       <div>
         <h1 class="page-title">Turnos de caja</h1>
@@ -75,7 +76,7 @@ import { ESTADO_TURNO, EstadoTurno, FilaTurno, VentasApi } from '../../core/vent
         </tbody>
       </table>
     </div>
-  `
+  `,
 })
 export class TurnosComponent implements OnInit {
   private readonly api = inject(VentasApi);

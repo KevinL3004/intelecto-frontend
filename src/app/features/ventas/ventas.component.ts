@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -15,9 +15,10 @@ const ENTREGA: Record<string, string> = {
 
 /** Ventas (R-01). Con ?pendientes=1 lista lo que falta entregar (CU-10). */
 @Component({
-    selector: 'app-ventas',
-    imports: [DatePipe, FormsModule, RouterLink],
-    template: `
+  selector: 'app-ventas',
+  imports: [DatePipe, FormsModule, RouterLink],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: `
     <div class="mb-4 flex flex-wrap items-end justify-between gap-2">
       <div>
         <h1 class="page-title">
@@ -125,7 +126,7 @@ const ENTREGA: Record<string, string> = {
         </button>
       </div>
     }
-  `
+  `,
 })
 export class VentasComponent implements OnInit {
   private readonly api = inject(VentasApi);

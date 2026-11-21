@@ -1,12 +1,13 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, input, ChangeDetectionStrategy } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ESTADO_LINEA, Venta } from '../../core/ventas/ventas.api';
 
 /** Comprobante de venta (RF-09), con los libros pendientes de entrega. Se imprime con el navegador. */
 @Component({
-    selector: 'app-comprobante',
-    imports: [DatePipe],
-    template: `
+  selector: 'app-comprobante',
+  imports: [DatePipe],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: `
     @let v = venta();
     <div class="card mx-auto max-w-xl space-y-3 text-sm print:max-w-none print:border-0 print:p-0">
       <div class="text-center">
@@ -115,7 +116,7 @@ import { ESTADO_LINEA, Venta } from '../../core/ventas/ventas.api';
         </div>
       }
     </div>
-  `
+  `,
 })
 export class ComprobanteComponent {
   readonly venta = input.required<Venta>();

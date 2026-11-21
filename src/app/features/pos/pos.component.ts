@@ -6,6 +6,7 @@ import {
   OnDestroy,
   OnInit,
   signal,
+  ChangeDetectionStrategy,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -48,9 +49,10 @@ interface PagoForm {
  * El frontend nunca calcula montos finales: todo sale de POST /ventas/cotizar.
  */
 @Component({
-    selector: 'app-pos',
-    imports: [FormsModule, DatePipe, RouterLink, ConteoComponent, ComprobanteComponent],
-    template: `
+  selector: 'app-pos',
+  imports: [FormsModule, DatePipe, RouterLink, ConteoComponent, ComprobanteComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: `
     @if (cargando()) {
       <p class="muted">Cargando…</p>
     } @else if (!turno()) {
@@ -452,7 +454,7 @@ interface PagoForm {
         </div>
       </div>
     }
-  `
+  `,
 })
 export class PosComponent implements OnInit, OnDestroy {
   private readonly api = inject(VentasApi);

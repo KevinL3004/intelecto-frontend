@@ -1,4 +1,13 @@
-import { Component, computed, effect, inject, OnInit, signal, untracked } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  OnInit,
+  signal,
+  untracked,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ToastService } from '../../../core/ui/toast.service';
@@ -18,9 +27,10 @@ const q = (c: number) => (c / 100).toFixed(2);
 
 /** Combos por grado: libros del grado con un descuento sobre la suma de precios. */
 @Component({
-    selector: 'app-combos',
-    imports: [FormsModule, ColegioSelectComponent],
-    template: `
+  selector: 'app-combos',
+  imports: [FormsModule, ColegioSelectComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: `
     <div class="mb-4 flex flex-wrap items-end justify-between gap-2">
       <div>
         <h1 class="page-title">Combos por grado</h1>
@@ -240,7 +250,7 @@ const q = (c: number) => (c / 100).toFixed(2);
         </tbody>
       </table>
     </div>
-  `
+  `,
 })
 export class CombosComponent implements OnInit {
   private readonly api = inject(CatalogoApi);

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ToastService } from '../../../core/ui/toast.service';
@@ -10,9 +10,10 @@ import { Colegio, ColegiosService } from './colegios.service';
  * Copiar este componente como base para los demás catálogos.
  */
 @Component({
-    selector: 'app-colegios',
-    imports: [ReactiveFormsModule],
-    template: `
+  selector: 'app-colegios',
+  imports: [ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: `
     <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
       <div>
         <h1 class="page-title">Colegios</h1>
@@ -110,7 +111,7 @@ import { Colegio, ColegiosService } from './colegios.service';
         </tbody>
       </table>
     </div>
-  `
+  `,
 })
 export class ColegiosComponent implements OnInit {
   private readonly service = inject(ColegiosService);

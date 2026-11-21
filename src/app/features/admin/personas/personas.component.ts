@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ToastService } from '../../../core/ui/toast.service';
@@ -10,9 +10,10 @@ import { AdminApi, Persona, PersonaForm } from '../../../core/admin/admin.api';
  * solo el Admin edita o elimina.
  */
 @Component({
-    selector: 'app-personas',
-    imports: [ReactiveFormsModule],
-    template: `
+  selector: 'app-personas',
+  imports: [ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: `
     <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
       <div>
         <h1 class="page-title">Personas y clientes</h1>
@@ -141,7 +142,7 @@ import { AdminApi, Persona, PersonaForm } from '../../../core/admin/admin.api';
         </button>
       </div>
     }
-  `
+  `,
 })
 export class PersonasComponent implements OnInit {
   private readonly api = inject(AdminApi);

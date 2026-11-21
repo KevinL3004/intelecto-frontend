@@ -1,13 +1,14 @@
 import { QuetzalPipe } from '../../shared/quetzal.pipe';
-import { Component, input } from '@angular/core';
+import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { Acta, ESTADO_TURNO } from '../../core/ventas/ventas.api';
 
 /** Acta de turno (R-08): conteos, cuadre por método, pagos con referencia y movimientos de caja. */
 @Component({
-    selector: 'app-acta',
-    imports: [QuetzalPipe, DatePipe],
-    template: `
+  selector: 'app-acta',
+  imports: [QuetzalPipe, DatePipe],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: `
     @let a = acta();
     <div class="card space-y-4 text-sm print:border-0 print:p-0">
       <div class="flex flex-wrap items-start justify-between gap-2">
@@ -214,7 +215,7 @@ import { Acta, ESTADO_TURNO } from '../../core/ventas/ventas.api';
         <p class="border-t border-zinc-400 pt-1">Recibe (Contador)</p>
       </div>
     </div>
-  `
+  `,
 })
 export class ActaComponent {
   readonly acta = input.required<Acta>();

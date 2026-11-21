@@ -1,5 +1,5 @@
 import { QuetzalPipe } from '../../shared/quetzal.pipe';
-import { Component, inject, input, OnInit, signal } from '@angular/core';
+import { Component, inject, input, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
@@ -20,9 +20,10 @@ import { ActaComponent } from './acta.component';
  * retiros/ingresos de efectivo y cierre forzado (Admin/Contador).
  */
 @Component({
-    selector: 'app-turno-detalle',
-    imports: [QuetzalPipe, FormsModule, RouterLink, ConteoComponent, ActaComponent],
-    template: `
+  selector: 'app-turno-detalle',
+  imports: [QuetzalPipe, FormsModule, RouterLink, ConteoComponent, ActaComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: `
     <div class="mb-4 flex items-center justify-between print:hidden">
       <a class="btn-ghost btn-sm" routerLink="/turnos">← Turnos</a>
       <button class="btn-secondary btn-sm" (click)="imprimir()">Imprimir acta</button>
@@ -131,7 +132,7 @@ import { ActaComponent } from './acta.component';
 
       <app-acta [acta]="a" />
     }
-  `
+  `,
 })
 export class TurnoDetalleComponent implements OnInit {
   readonly id = input.required<string>();

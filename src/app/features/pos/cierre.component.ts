@@ -1,5 +1,5 @@
 import { QuetzalPipe } from '../../shared/quetzal.pipe';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ToastService } from '../../core/ui/toast.service';
@@ -19,9 +19,10 @@ import { ActaComponent } from '../turnos/acta.component';
  * registra una sola vez y, si hay diferencia, se pide observación antes de cerrar.
  */
 @Component({
-    selector: 'app-cierre',
-    imports: [QuetzalPipe, FormsModule, RouterLink, ConteoComponent, ActaComponent],
-    template: `
+  selector: 'app-cierre',
+  imports: [QuetzalPipe, FormsModule, RouterLink, ConteoComponent, ActaComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: `
     <h1 class="page-title mb-4 print:hidden">Cierre de turno</h1>
     @if (actaFinal(); as a) {
       <app-acta [acta]="a" />
@@ -127,7 +128,7 @@ import { ActaComponent } from '../turnos/acta.component';
         </div>
       </div>
     }
-  `
+  `,
 })
 export class CierreComponent implements OnInit {
   private readonly api = inject(VentasApi);

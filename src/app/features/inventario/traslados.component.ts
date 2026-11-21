@@ -1,4 +1,11 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  OnInit,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ToastService } from '../../core/ui/toast.service';
@@ -25,9 +32,10 @@ interface ItemForm {
  * Al recibir, lo que llega se reserva automáticamente para las ventas pendientes (FIFO).
  */
 @Component({
-    selector: 'app-traslados',
-    imports: [DatePipe, FormsModule],
-    template: `
+  selector: 'app-traslados',
+  imports: [DatePipe, FormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: `
     <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
       <div>
         <h1 class="page-title">Traslados entre colegios</h1>
@@ -278,7 +286,7 @@ interface ItemForm {
         </tbody>
       </table>
     </div>
-  `
+  `,
 })
 export class TrasladosComponent implements OnInit {
   private readonly api = inject(LogisticaApi);
