@@ -16,10 +16,9 @@ interface MetodoPago {
 
 /** RN-01: solo el Administrador edita el recargo; aplica en tiempo real a ventas nuevas. */
 @Component({
-  selector: 'app-metodos-pago',
-  standalone: true,
-  imports: [FormsModule],
-  template: `
+    selector: 'app-metodos-pago',
+    imports: [FormsModule],
+    template: `
     <h1 class="page-title">Métodos de pago</h1>
     <p class="muted mb-4">El recargo se aplica solo sobre el monto cobrado con ese método.</p>
     <div class="card overflow-x-auto p-0">
@@ -68,7 +67,7 @@ interface MetodoPago {
         </tbody>
       </table>
     </div>
-  `,
+  `
 })
 export class MetodosPagoComponent implements OnInit {
   private readonly http = inject(HttpClient);

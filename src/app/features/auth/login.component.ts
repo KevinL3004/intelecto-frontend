@@ -6,10 +6,9 @@ import { ThemeService } from '../../core/theme/theme.service';
 import { mensajeError } from '../../core/http/api-error';
 
 @Component({
-  selector: 'app-login',
-  standalone: true,
-  imports: [ReactiveFormsModule],
-  template: `
+    selector: 'app-login',
+    imports: [ReactiveFormsModule],
+    template: `
     <div class="flex min-h-screen items-center justify-center p-4">
       <form class="card w-full max-w-sm space-y-4 p-6" [formGroup]="form" (ngSubmit)="entrar()">
         <div>
@@ -47,7 +46,7 @@ import { mensajeError } from '../../core/http/api-error';
         </button>
       </form>
     </div>
-  `,
+  `
 })
 export class LoginComponent {
   private readonly auth = inject(AuthService);

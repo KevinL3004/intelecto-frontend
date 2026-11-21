@@ -111,10 +111,9 @@ const hoyISO = () => {
 };
 
 @Component({
-  selector: 'app-reportes',
-  standalone: true,
-  imports: [FormsModule, DatePipe, QuetzalPipe],
-  template: `
+    selector: 'app-reportes',
+    imports: [FormsModule, DatePipe, QuetzalPipe],
+    template: `
     <h1 class="page-title mb-4">Reportes</h1>
     <div class="space-y-4">
       <nav class="flex flex-wrap gap-1" aria-label="Reportes">
@@ -273,7 +272,7 @@ const hoyISO = () => {
         }
       </div>
     </div>
-  `,
+  `
 })
 export class ReportesComponent implements OnInit {
   private readonly api = inject(ReportesApi);

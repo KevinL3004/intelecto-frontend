@@ -10,10 +10,9 @@ const MONTO = /^\d{1,10}(\.\d{1,2})?$/;
 
 /** Cajas por colegio con su fondo (sencillo) asignado. Admin administra; Contador consulta. */
 @Component({
-  selector: 'app-cajas',
-  standalone: true,
-  imports: [ReactiveFormsModule],
-  template: `
+    selector: 'app-cajas',
+    imports: [ReactiveFormsModule],
+    template: `
     <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
       <div>
         <h1 class="page-title">Cajas</h1>
@@ -130,7 +129,7 @@ const MONTO = /^\d{1,10}(\.\d{1,2})?$/;
         </tbody>
       </table>
     </div>
-  `,
+  `
 })
 export class CajasComponent implements OnInit {
   private readonly api = inject(AdminApi);

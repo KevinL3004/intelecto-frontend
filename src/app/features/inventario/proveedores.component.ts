@@ -7,10 +7,9 @@ import { LogisticaApi, Proveedor } from '../../core/inventario/logistica.api';
 
 /** Mantenimiento de proveedores (Admin y Contador). */
 @Component({
-  selector: 'app-proveedores',
-  standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
-  template: `
+    selector: 'app-proveedores',
+    imports: [ReactiveFormsModule, RouterLink],
+    template: `
     <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
       <div>
         <a class="btn-ghost btn-sm mb-1" routerLink="/inventario/pedidos">← Pedidos</a>
@@ -103,7 +102,7 @@ import { LogisticaApi, Proveedor } from '../../core/inventario/logistica.api';
         </tbody>
       </table>
     </div>
-  `,
+  `
 })
 export class ProveedoresComponent implements OnInit {
   private readonly api = inject(LogisticaApi);

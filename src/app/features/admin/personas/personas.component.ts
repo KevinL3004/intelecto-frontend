@@ -10,10 +10,9 @@ import { AdminApi, Persona, PersonaForm } from '../../../core/admin/admin.api';
  * solo el Admin edita o elimina.
  */
 @Component({
-  selector: 'app-personas',
-  standalone: true,
-  imports: [ReactiveFormsModule],
-  template: `
+    selector: 'app-personas',
+    imports: [ReactiveFormsModule],
+    template: `
     <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
       <div>
         <h1 class="page-title">Personas y clientes</h1>
@@ -142,7 +141,7 @@ import { AdminApi, Persona, PersonaForm } from '../../../core/admin/admin.api';
         </button>
       </div>
     }
-  `,
+  `
 })
 export class PersonasComponent implements OnInit {
   private readonly api = inject(AdminApi);

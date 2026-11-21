@@ -9,10 +9,9 @@ import { ComprobanteComponent } from './comprobante.component';
 
 /** Detalle de venta: comprobante, entrega de reservados (CU-10) y anulación (CU-15). */
 @Component({
-  selector: 'app-venta-detalle',
-  standalone: true,
-  imports: [FormsModule, RouterLink, ComprobanteComponent],
-  template: `
+    selector: 'app-venta-detalle',
+    imports: [FormsModule, RouterLink, ComprobanteComponent],
+    template: `
     <div class="mb-4 flex flex-wrap items-center justify-between gap-2 print:hidden">
       <a class="btn-ghost btn-sm" routerLink="/ventas">← Ventas</a>
       <div class="flex gap-2">
@@ -116,7 +115,7 @@ import { ComprobanteComponent } from './comprobante.component';
 
       <app-comprobante [venta]="v" />
     }
-  `,
+  `
 })
 export class VentaDetalleComponent implements OnInit {
   readonly id = input.required<string>();

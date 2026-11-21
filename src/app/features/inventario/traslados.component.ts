@@ -25,10 +25,9 @@ interface ItemForm {
  * Al recibir, lo que llega se reserva automáticamente para las ventas pendientes (FIFO).
  */
 @Component({
-  selector: 'app-traslados',
-  standalone: true,
-  imports: [DatePipe, FormsModule],
-  template: `
+    selector: 'app-traslados',
+    imports: [DatePipe, FormsModule],
+    template: `
     <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
       <div>
         <h1 class="page-title">Traslados entre colegios</h1>
@@ -279,7 +278,7 @@ interface ItemForm {
         </tbody>
       </table>
     </div>
-  `,
+  `
 })
 export class TrasladosComponent implements OnInit {
   private readonly api = inject(LogisticaApi);

@@ -12,10 +12,9 @@ const PASSWORD = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
 /** Usuarios del sistema. Admin administra; Contador solo consulta. */
 @Component({
-  selector: 'app-usuarios',
-  standalone: true,
-  imports: [ReactiveFormsModule, DatePipe],
-  template: `
+    selector: 'app-usuarios',
+    imports: [ReactiveFormsModule, DatePipe],
+    template: `
     <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
       <div>
         <h1 class="page-title">Usuarios</h1>
@@ -203,7 +202,7 @@ const PASSWORD = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
         </tbody>
       </table>
     </div>
-  `,
+  `
 })
 export class UsuariosComponent implements OnInit {
   private readonly api = inject(AdminApi);

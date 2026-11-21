@@ -7,10 +7,9 @@ import { MENU } from './menu';
 import { VentasApi } from '../core/ventas/ventas.api';
 
 @Component({
-  selector: 'app-shell',
-  standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
-  template: `
+    selector: 'app-shell',
+    imports: [RouterOutlet, RouterLink, RouterLinkActive],
+    template: `
     <div class="flex min-h-screen">
       <!-- Barra lateral -->
       <aside
@@ -90,7 +89,7 @@ import { VentasApi } from '../core/ventas/ventas.api';
         </main>
       </div>
     </div>
-  `,
+  `
 })
 export class ShellComponent {
   readonly auth = inject(AuthService);

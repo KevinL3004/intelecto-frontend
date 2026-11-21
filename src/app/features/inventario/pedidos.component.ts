@@ -24,10 +24,9 @@ interface ItemForm {
 
 /** CU-14: consolidado por pedir (R-06), pedidos a proveedor y recepción total o parcial. */
 @Component({
-  selector: 'app-pedidos',
-  standalone: true,
-  imports: [DatePipe, FormsModule, RouterLink],
-  template: `
+    selector: 'app-pedidos',
+    imports: [DatePipe, FormsModule, RouterLink],
+    template: `
     <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
       <div>
         <h1 class="page-title">Pedidos a proveedor</h1>
@@ -265,7 +264,7 @@ interface ItemForm {
         </tbody>
       </table>
     </div>
-  `,
+  `
 })
 export class PedidosComponent implements OnInit {
   private readonly api = inject(LogisticaApi);

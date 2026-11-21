@@ -19,10 +19,9 @@ import { ActaComponent } from '../turnos/acta.component';
  * registra una sola vez y, si hay diferencia, se pide observación antes de cerrar.
  */
 @Component({
-  selector: 'app-cierre',
-  standalone: true,
-  imports: [QuetzalPipe, FormsModule, RouterLink, ConteoComponent, ActaComponent],
-  template: `
+    selector: 'app-cierre',
+    imports: [QuetzalPipe, FormsModule, RouterLink, ConteoComponent, ActaComponent],
+    template: `
     <h1 class="page-title mb-4 print:hidden">Cierre de turno</h1>
     @if (actaFinal(); as a) {
       <app-acta [acta]="a" />
@@ -128,7 +127,7 @@ import { ActaComponent } from '../turnos/acta.component';
         </div>
       </div>
     }
-  `,
+  `
 })
 export class CierreComponent implements OnInit {
   private readonly api = inject(VentasApi);

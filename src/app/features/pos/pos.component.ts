@@ -48,10 +48,9 @@ interface PagoForm {
  * El frontend nunca calcula montos finales: todo sale de POST /ventas/cotizar.
  */
 @Component({
-  selector: 'app-pos',
-  standalone: true,
-  imports: [FormsModule, DatePipe, RouterLink, ConteoComponent, ComprobanteComponent],
-  template: `
+    selector: 'app-pos',
+    imports: [FormsModule, DatePipe, RouterLink, ConteoComponent, ComprobanteComponent],
+    template: `
     @if (cargando()) {
       <p class="muted">Cargando…</p>
     } @else if (!turno()) {
@@ -453,7 +452,7 @@ interface PagoForm {
         </div>
       </div>
     }
-  `,
+  `
 })
 export class PosComponent implements OnInit, OnDestroy {
   private readonly api = inject(VentasApi);

@@ -12,10 +12,9 @@ const MONTO = /^\d{1,10}(\.\d{1,2})?$/;
 
 /** Lista de precios por colegio y ciclo. El Admin edita en la tabla y guarda en bloque. */
 @Component({
-  selector: 'app-precios',
-  standalone: true,
-  imports: [FormsModule, ColegioSelectComponent],
-  template: `
+    selector: 'app-precios',
+    imports: [FormsModule, ColegioSelectComponent],
+    template: `
     <div class="mb-4 flex flex-wrap items-end justify-between gap-2">
       <div>
         <h1 class="page-title">Precios por colegio</h1>
@@ -125,7 +124,7 @@ const MONTO = /^\d{1,10}(\.\d{1,2})?$/;
         </button>
       </div>
     }
-  `,
+  `
 })
 export class PreciosComponent implements OnInit {
   private readonly api = inject(CatalogoApi);

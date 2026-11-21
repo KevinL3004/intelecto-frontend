@@ -18,10 +18,9 @@ const q = (c: number) => (c / 100).toFixed(2);
 
 /** Combos por grado: libros del grado con un descuento sobre la suma de precios. */
 @Component({
-  selector: 'app-combos',
-  standalone: true,
-  imports: [FormsModule, ColegioSelectComponent],
-  template: `
+    selector: 'app-combos',
+    imports: [FormsModule, ColegioSelectComponent],
+    template: `
     <div class="mb-4 flex flex-wrap items-end justify-between gap-2">
       <div>
         <h1 class="page-title">Combos por grado</h1>
@@ -241,7 +240,7 @@ const q = (c: number) => (c / 100).toFixed(2);
         </tbody>
       </table>
     </div>
-  `,
+  `
 })
 export class CombosComponent implements OnInit {
   private readonly api = inject(CatalogoApi);

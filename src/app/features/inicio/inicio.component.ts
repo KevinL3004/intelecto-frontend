@@ -10,10 +10,9 @@ const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
 
 /** Inicio. Admin y Contador ven el tablero del día (R-13); el cajero, accesos rápidos. */
 @Component({
-  selector: 'app-inicio',
-  standalone: true,
-  imports: [DatePipe, RouterLink, QuetzalPipe],
-  template: `
+    selector: 'app-inicio',
+    imports: [DatePipe, RouterLink, QuetzalPipe],
+    template: `
     <h1 class="page-title">Hola, {{ auth.usuario()?.nombre }}</h1>
     @if (!supervisor) {
       <p class="muted mb-6">¿Qué desea hacer?</p>
@@ -144,7 +143,7 @@ const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
     } @else {
       <p class="muted">Cargando…</p>
     }
-  `,
+  `
 })
 export class InicioComponent implements OnInit {
   readonly auth = inject(AuthService);

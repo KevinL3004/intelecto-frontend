@@ -23,10 +23,9 @@ const TIPO_LABEL: Record<string, string> = {
 
 /** Existencias por colegio, ingreso de mercadería, ajustes por conteo y kardex por libro. */
 @Component({
-  selector: 'app-inventario',
-  standalone: true,
-  imports: [FormsModule, DatePipe, ColegioSelectComponent],
-  template: `
+    selector: 'app-inventario',
+    imports: [FormsModule, DatePipe, ColegioSelectComponent],
+    template: `
     <div class="mb-4 flex flex-wrap items-end justify-between gap-2">
       <div>
         <h1 class="page-title">Inventario</h1>
@@ -263,7 +262,7 @@ const TIPO_LABEL: Record<string, string> = {
         </tbody>
       </table>
     </div>
-  `,
+  `
 })
 export class InventarioComponent {
   private readonly api = inject(CatalogoApi);

@@ -6,10 +6,9 @@ import { mensajeError } from '../../../core/http/api-error';
 import { CatalogoApi, Libro } from '../../../core/catalogo/catalogo.api';
 
 @Component({
-  selector: 'app-libros',
-  standalone: true,
-  imports: [ReactiveFormsModule],
-  template: `
+    selector: 'app-libros',
+    imports: [ReactiveFormsModule],
+    template: `
     <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
       <div>
         <h1 class="page-title">Libros</h1>
@@ -117,7 +116,7 @@ import { CatalogoApi, Libro } from '../../../core/catalogo/catalogo.api';
         </button>
       </div>
     }
-  `,
+  `
 })
 export class LibrosComponent implements OnInit {
   private readonly api = inject(CatalogoApi);
