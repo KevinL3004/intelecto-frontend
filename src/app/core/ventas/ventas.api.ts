@@ -234,6 +234,8 @@ export interface Venta {
   total: string;
   estadoPago: 'PAGADA' | 'ANULADA' | string;
   estadoEntrega: 'PENDIENTE' | 'PARCIAL' | 'COMPLETA';
+  /** Fecha de la última entrega, cuando la orden ya se entregó completa. */
+  entregaCompletaEn: string | null;
   observacion: string | null;
   fecha: string;
   usuario: string;
@@ -253,6 +255,7 @@ export interface Venta {
     subtotal: string;
     estado: EstadoLinea;
     colegioOrigen: string | null;
+    entregadoEn: string | null;
   }[];
   pagos: {
     id: number;

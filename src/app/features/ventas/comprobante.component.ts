@@ -60,6 +60,17 @@ interface Bloque {
 
       @if (v.estadoPago === 'ANULADA') {
         <p class="anulada">*** VENTA ANULADA ***<br />{{ v.motivoAnulacion }}</p>
+      } @else if (v.estadoEntrega === 'COMPLETA') {
+        <p class="estado-orden">
+          ENTREGADO
+          @if (v.entregaCompletaEn) {
+            <br /><span class="chico">el {{ v.entregaCompletaEn | date: 'dd/MM/yyyy HH:mm' }}</span>
+          }
+        </p>
+      } @else {
+        <p class="estado-orden pendiente">
+          PENDIENTE DE ENTREGA<br /><span class="chico">{{ faltan() }} libro(s) por entregar</span>
+        </p>
       }
 
       @for (b of bloques(); track $index) {
@@ -81,7 +92,9 @@ interface Bloque {
               <span>{{ l.cantidad }} × {{ l.titulo }}</span>
               <span class="monto">Q{{ l.subtotal }}</span>
             </div>
-            @if (l.estado !== 'ENTREGADO') {
+            @if (l.estado === 'ENTREGADO' && entregaPosterior(l)) {
+              <p class="estado">↳ Entregado el {{ l.entregadoEn | date: 'dd/MM/yyyy' }}</p>
+            } @else if (l.estado !== 'ENTREGADO') {
               <p class="estado">
                 ↳ {{ estado(l.estado) }}{{ l.colegioOrigen ? ' (' + l.colegioOrigen + ')' : '' }}
               </p>
@@ -215,6 +228,18 @@ interface Bloque {
       font-size: 14px;
       font-weight: 700;
     }
+    .estado-orden {
+      margin: 2mm 0;
+      padding: 1.5mm;
+      border: 2px solid #000;
+      text-align: center;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .estado-orden.pendiente {
+      border-style: double;
+      border-width: 3px;
+    }
     .anulada,
     .aviso {
       margin: 2mm 0;
@@ -267,6 +292,18 @@ export class ComprobanteComponent {
   readonly pendientes = computed(() =>
     this.venta().lineas.some((l) => !['ENTREGADO', 'ANULADO'].includes(l.estado)),
   );
+  readonly faltan = computed(() =>
+    this.venta()
+      .lineas.filter((l) => l.estado !== 'ANULADO')
+      .reduce((a, l) => a + l.cantidad - l.cantidadEntregada, 0),
+  );
+  /** Entregado otro día que la venta (p. ej. llegó por traslado): se imprime la fecha. */
+  entregaPosterior(l: Linea) {
+    return (
+      !!l.entregadoEn &&
+      new Date(l.entregadoEn).toDateString() !== new Date(this.venta().fecha).toDateString()
+    );
+  }
   estado(e: string) {
     return ESTADO_LINEA[e as keyof typeof ESTADO_LINEA]?.texto ?? e;
   }

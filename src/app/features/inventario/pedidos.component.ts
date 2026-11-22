@@ -22,6 +22,7 @@ import {
 } from '../../core/inventario/logistica.api';
 import { CatalogoApi, Libro } from '../../core/catalogo/catalogo.api';
 import { Colegio, ColegiosService } from '../admin/colegios/colegios.service';
+import { AvisoSugerenciasComponent } from '../reportes/aviso-sugerencias.component';
 
 interface ItemForm {
   libroId: number;
@@ -32,9 +33,10 @@ interface ItemForm {
 /** CU-14: consolidado por pedir (R-06), pedidos a proveedor y recepción total o parcial. */
 @Component({
   selector: 'app-pedidos',
-  imports: [DatePipe, FormsModule, RouterLink],
+  imports: [DatePipe, FormsModule, RouterLink, AvisoSugerenciasComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
+    <app-aviso-sugerencias tipo="PEDIDO" />
     <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
       <div>
         <h1 class="page-title">Pedidos a proveedor</h1>

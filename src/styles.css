@@ -122,3 +122,24 @@
     @apply ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[11px] font-semibold leading-5 text-white tabular-nums;
   }
 }
+
+/* Gráficas: paleta validada (serie 1 = azul; estados fijos). Modo oscuro con su propio paso. */
+:root {
+  --viz-serie: #2a78d6;
+  --viz-serie-banda: rgb(42 120 214 / 0.1);
+  --viz-grilla: #e1e0d9;
+  --viz-eje: #c3c2b7;
+  --viz-tenue: #898781;
+  --viz-superficie: #ffffff;
+  --viz-critico: #d03b3b;
+  --viz-serio: #ec835a;
+  --viz-aviso: #fab219;
+  --viz-bien: #0ca30c;
+}
+.dark {
+  --viz-serie: #3987e5;
+  --viz-serie-banda: rgb(57 135 229 / 0.12);
+  --viz-grilla: #2c2c2a;
+  --viz-eje: #383835;
+  --viz-superficie: #09090b;
+}

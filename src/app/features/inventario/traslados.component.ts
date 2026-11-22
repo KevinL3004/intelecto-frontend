@@ -20,6 +20,7 @@ import {
 } from '../../core/inventario/logistica.api';
 import { CatalogoApi, Libro } from '../../core/catalogo/catalogo.api';
 import { Colegio, ColegiosService } from '../admin/colegios/colegios.service';
+import { AvisoSugerenciasComponent } from '../reportes/aviso-sugerencias.component';
 
 interface ItemForm {
   libroId: number;
@@ -33,9 +34,10 @@ interface ItemForm {
  */
 @Component({
   selector: 'app-traslados',
-  imports: [DatePipe, FormsModule],
+  imports: [DatePipe, FormsModule, AvisoSugerenciasComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
+    <app-aviso-sugerencias tipo="TRASLADO" />
     <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
       <div>
         <h1 class="page-title">Traslados entre colegios</h1>
