@@ -27,7 +27,7 @@
     "@angular/cli": "22.2.6",
     "@angular/compiler-cli": "22.2.4",
     "autoprefixer": "10.6.2",
-    "postcss": "8.5.32",
+    "postcss": "8.5.33",
     "prettier": "3.9.10",
     "tailwindcss": "3.4.19",
     "typescript": "6.0.3"
