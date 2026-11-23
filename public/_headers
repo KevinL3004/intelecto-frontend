@@ -1,5 +1,5 @@
 # Cabeceras de seguridad para Cloudflare Pages.
-# Si cambia la URL de la API (environment.prod.ts), actualizar connect-src.
+# connect-src lo escribe `npm run build:cloudflare` a partir de API_URL (no editar a mano).
 /*
   Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://intelecto-backend.onrender.com; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload

@@ -27,12 +27,16 @@ Las clases base están en `src/styles.css`:
 - Nuevo mantenimiento: copiar `features/admin/colegios` y agregar la ruta en `app.routes.ts` y en `layout/menu.ts`.
 
 ## Producción (Cloudflare Pages)
-1. Poner la URL de Render en `src/environments/environment.prod.ts`.
-2. Cloudflare Pages → conectar repo → Build command: `npx ng build` · Output: `dist/intelecto-frontend/browser`.
-3. Variable de entorno en Cloudflare: `NODE_VERSION=22.23.5` (o superior).
-4. `public/_redirects` ya incluye la regla SPA.
-5. `public/_headers` aplica las cabeceras de seguridad (CSP, HSTS, etc.). **Si cambia la URL de
-   la API, actualizar `connect-src`** en ese archivo o el navegador bloqueará las peticiones.
+Guía completa: `DESPLIEGUE.md` del backend. Resumen:
+
+| Campo | Valor |
+|---|---|
+| Build command | `npm run build:cloudflare` |
+| Output | `dist/intelecto-frontend/browser` |
+| Variables | `API_URL=https://<api>.onrender.com` · `NODE_VERSION=22.23.5` |
+
+`build:cloudflare` escribe `API_URL` en `environment.prod.ts` **y** en la CSP de
+`public/_headers` (`connect-src`), así nunca quedan distintas. `_redirects` trae la regla SPA.
 
 ## Seguridad
 - Sesión en `sessionStorage` (termina al cerrar la pestaña); "Salir" revoca la sesión en el servidor.
